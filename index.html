@@ -187,6 +187,7 @@ let step = 0;
 const esc = s => String(s ?? "").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const CODE_PREFIX = "LIBERTADOR1.";
 const WHATSAPP_CLINICA = "5571991006266"; /* número que recebe as avaliações */
+const BANCO_URL = "https://docs.google.com/spreadsheets/d/1euKgTlr7TXedcBK1bs-P6NhJTsiqqip_h5n5NLDWedk/edit"; /* planilha Banco de Pesquisa (acesso restrito) */
 
 /* capacidade de download (disponível quando publicado no claude.ai; ausente em arquivo local) */
 let DL = null;
@@ -458,13 +459,14 @@ function proBody(id){
     <p class="lede">Confidencial: a linha da planilha contém o nome do paciente e destina-se ao arquivo interno da equipe, com acesso restrito. Nas análises e em qualquer material que circule, use somente o identificador do estudo.</p>
     <div class="outhead"><h3>1 · Nota para o prontuário</h3><span><button class="mini dlbtn hide" data-dl="o1" data-fn="nota">Baixar .txt</button> <button class="mini" data-copy="o1">Copiar</button></span></div>
     <div class="out" id="o1">${esc(notaClinica())}</div>
-    <div class="outhead"><h3>2 · Linha para a planilha da equipe (confidencial)</h3><span><button class="mini dlbtn hide" data-dl="o2" data-fn="linha">Baixar .txt</button> <button class="mini" data-copy="o2">Copiar</button></span></div>
+    <div class="outhead"><h3>2 · Linha para o Banco de Pesquisa (confidencial)</h3><span><a class="mini" style="text-decoration:none" href="${BANCO_URL}" target="_blank" rel="noopener">Abrir Banco</a> <button class="mini dlbtn hide" data-dl="o2" data-fn="linha">Baixar .txt</button> <button class="mini" data-copy="o2">Copiar</button></span></div>
     <div class="out" id="o2">${esc(linhaDados())}</div>
+    <p class="lede" style="margin:6px 0 0; font-size:.85rem">Copie e cole na primeira linha vazia do Banco de Pesquisa (célula da coluna A): os valores se distribuem sozinhos pelas colunas.</p>
     <div class="outhead"><h3>3 · Termo de consentimento assinado</h3><span><button class="mini dlbtn hide" data-dl="o3" data-fn="tcle">Baixar .txt</button> <button class="mini" data-copy="o3">Copiar</button></span></div>
     <div class="out" id="o3">${esc(tcleRegistro())}</div>
     <div class="outhead"><h3>4 · Código original, para arquivar na planilha</h3><button class="mini" data-copy="o4">Copiar</button></div>
     <div class="out" id="o4" style="max-height:120px">${esc(S._codeIn||buildCode())}</div>
-    <div class="note">Arquive: nota no episódio do prontuário (data de hoje); linha na planilha restrita; TCLE em PDF assinado junto aos documentos da pesquisa; e o código do item 4 numa coluna "CÓDIGO AVALIAÇÃO" da aba Pacientes Programa, na linha do paciente. O código é decodificável: com ele arquivado, a linha pode ser regenerada ou atualizada a qualquer momento, pelo app ou diretamente na planilha.</div>
+    <div class="note">Arquive: nota no episódio do prontuário (data de hoje); linha no Banco de Pesquisa (planilha restrita da equipe); TCLE em PDF assinado junto aos documentos da pesquisa; e o código do item 4 na coluna "CÓDIGO AVALIAÇÃO" da aba Pacientes Programa (planilha do programa, usada só como referência), na linha do paciente. O código é decodificável: com ele arquivado, a linha do Banco pode ser regenerada a qualquer momento.</div>
     <div class="nav"><button class="btn" data-go="-1">Voltar</button>
       <span style="display:flex;gap:10px">
       <button class="btn" onclick="window.print()">Imprimir / PDF</button>
@@ -577,9 +579,8 @@ function linhaDados(){
     preenchimento:S.preenchimento||"Autoaplicado",
     tcle:S.tcleConcorda||"", tcle_assinatura:S.tcleNome||"", tcle_data:S.tcleData||""
   };
-  const q = s => `"${String(s).replace(/"/g,'""')}"`;
-  return "CONFIDENCIAL · arquivo interno da equipe · não circular com o nome\n"
-       + Object.keys(cols).join(",") + "\n" + Object.values(cols).map(q).join(",");
+  /* separada por TAB: colando na planilha, cada valor cai na sua coluna */
+  return Object.values(cols).map(s => String(s).replace(/[\t\n\r]+/g, " ")).join("\t");
 }
 
 function tcleRegistro(){
