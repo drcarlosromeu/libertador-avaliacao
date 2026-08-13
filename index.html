@@ -1,0 +1,734 @@
+<title>Avaliação de Seguimento — LibertaDor</title>
+<style>
+  :root{
+    --paper:#F5F3EF; --surface:#FFFFFF; --surface-2:#EFEDE7;
+    --ink:#1B3A4B; --ink-soft:#4A5B62; --ink-faint:#7C8A8F;
+    --sage:#7E9A6C; --sage-deep:#5E7A4F; --sage-wash:#E8EEE2;
+    --line:#D7D9D2; --line-strong:#B9BDB4;
+    --warn-bg:#FBF2E2; --warn-line:#D9B15E; --warn-ink:#6B4E14;
+    --period-bg:#E4EAF0; --period-ink:#2F5468;
+    --focus:#2F6F8F;
+    --r:6px;
+    --step:clamp(1rem,0.9rem + 0.4vw,1.1rem);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#121C21; --surface:#1A272E; --surface-2:#213039;
+      --ink:#E8EDEA; --ink-soft:#AFBEC2; --ink-faint:#7F9096;
+      --sage:#A8C494; --sage-deep:#C0D8AC; --sage-wash:#26362A;
+      --line:#33454E; --line-strong:#4A606B;
+      --warn-bg:#2E2716; --warn-line:#9C7B2E; --warn-ink:#EBD9A8;
+      --period-bg:#1F3441; --period-ink:#9CC4DA;
+      --focus:#7FC3E4;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#121C21; --surface:#1A272E; --surface-2:#213039;
+    --ink:#E8EDEA; --ink-soft:#AFBEC2; --ink-faint:#7F9096;
+    --sage:#A8C494; --sage-deep:#C0D8AC; --sage-wash:#26362A;
+    --line:#33454E; --line-strong:#4A606B;
+    --warn-bg:#2E2716; --warn-line:#9C7B2E; --warn-ink:#EBD9A8;
+    --period-bg:#1F3441; --period-ink:#9CC4DA;
+    --focus:#7FC3E4;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    font-size:var(--step); line-height:1.5;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:660px; margin:0 auto; padding:0 18px 72px;}
+
+  header.top{
+    position:sticky; top:0; z-index:20; background:var(--paper);
+    border-bottom:1px solid var(--line); padding:14px 0 0;
+  }
+  .brand{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+  .brand h1{font-size:1.02rem; margin:0; letter-spacing:-0.01em; font-weight:640;}
+  .brand .clinic{font-size:0.78rem; color:var(--ink-faint); letter-spacing:0.06em; text-transform:uppercase;}
+  .rail{display:flex; gap:3px; margin:12px 0 0;}
+  .rail i{flex:1; height:3px; background:var(--line); border-radius:2px;}
+  .rail i.done{background:var(--sage);}
+  .rail i.now{background:var(--sage-deep);}
+  .stepmeta{display:flex; justify-content:space-between; font-size:0.78rem; color:var(--ink-faint); padding:7px 0 11px;
+    font-variant-numeric:tabular-nums;}
+
+  section.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+    padding:22px 20px; margin:18px 0;}
+  section.card > h2{font-size:1.16rem; margin:0 0 4px; letter-spacing:-0.015em; text-wrap:balance; font-weight:640;}
+  section.card > .lede{color:var(--ink-soft); margin:0 0 14px; font-size:0.94rem;}
+
+  .period{display:inline-block; background:var(--period-bg); color:var(--period-ink);
+    font-size:0.74rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+    padding:4px 10px; border-radius:3px; margin:0 0 14px;}
+  .period.inline{margin:0 0 8px; font-size:0.7rem;}
+
+  .q{margin:0 0 24px;}
+  .q:last-child{margin-bottom:4px;}
+  .q > label.ask, .q > .ask{display:block; font-weight:560; margin:0 0 9px; text-wrap:pretty;}
+  .q .hint{display:block; font-weight:400; color:var(--ink-faint); font-size:0.86rem; margin-top:3px;}
+
+  .nrs{display:grid; grid-template-columns:repeat(11,1fr); gap:3px;}
+  .nrs button{
+    font:inherit; font-family:ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
+    font-variant-numeric:tabular-nums; font-size:0.92rem;
+    min-height:46px; padding:0; cursor:pointer;
+    background:var(--surface-2); color:var(--ink-soft);
+    border:1px solid var(--line); border-radius:4px;
+  }
+  .nrs button:hover{border-color:var(--line-strong);}
+  .nrs button[aria-pressed="true"]{background:var(--sage); border-color:var(--sage-deep); color:#12211A; font-weight:700;}
+  .anchors{display:flex; justify-content:space-between; font-size:0.78rem; color:var(--ink-faint); margin-top:6px;}
+
+  .opts{display:flex; flex-direction:column; gap:6px;}
+  .opts.row{flex-direction:row; flex-wrap:wrap;}
+  .opts button{
+    font:inherit; text-align:left; cursor:pointer; padding:11px 14px;
+    background:var(--surface-2); color:var(--ink); border:1px solid var(--line);
+    border-radius:4px;
+  }
+  .opts.row button{flex:1 1 auto; text-align:center;}
+  .opts button:hover{border-color:var(--line-strong);}
+  .opts button[aria-pressed="true"]{background:var(--sage-wash); border-color:var(--sage-deep); font-weight:600;}
+  .opts button[aria-pressed="true"]::before{content:"›  "; color:var(--sage-deep); font-weight:700;}
+
+  .checks{display:grid; grid-template-columns:repeat(auto-fill,minmax(215px,1fr)); gap:5px;}
+  .checks button{
+    font:inherit; text-align:left; cursor:pointer; padding:9px 12px; font-size:0.93rem;
+    background:var(--surface-2); color:var(--ink); border:1px solid var(--line); border-radius:4px;
+  }
+  .checks button[aria-pressed="true"]{background:var(--sage-wash); border-color:var(--sage-deep); font-weight:600;}
+  .checks button[aria-pressed="true"]::before{content:"✓  "; color:var(--sage-deep); font-weight:700;}
+  .grouplabel{font-size:0.78rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-faint);
+    margin:16px 0 7px; font-weight:600;}
+  .grouplabel:first-of-type{margin-top:4px;}
+
+  input[type=text],input[type=number],input[type=month],input[type=date],textarea,select{
+    font:inherit; width:100%; padding:10px 12px; color:var(--ink);
+    background:var(--surface-2); border:1px solid var(--line); border-radius:4px;
+  }
+  textarea{min-height:88px; resize:vertical; line-height:1.45;}
+  .pair{display:flex; gap:10px; flex-wrap:wrap;}
+  .pair > div{flex:1 1 180px;}
+  .pair label{display:block; font-size:0.82rem; color:var(--ink-faint); margin-bottom:4px;}
+
+  .derived{background:var(--sage-wash); border:1px solid var(--sage-deep); border-radius:4px;
+    padding:10px 13px; margin-top:11px; font-size:0.92rem; font-variant-numeric:tabular-nums;}
+
+  .note{background:var(--warn-bg); border-left:3px solid var(--warn-line); color:var(--warn-ink);
+    padding:11px 14px; border-radius:0 4px 4px 0; font-size:0.89rem; margin:14px 0;}
+
+  .nav{display:flex; gap:10px; justify-content:space-between; margin-top:26px;}
+  .btn{font:inherit; cursor:pointer; padding:12px 22px; border-radius:4px; border:1px solid var(--line-strong);
+    background:var(--surface-2); color:var(--ink); font-weight:560;}
+  .btn.primary{background:var(--sage-deep); border-color:var(--sage-deep); color:#F4F8F0;}
+  .btn.primary:hover{filter:brightness(1.08);}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+  .btn.big{width:100%; text-align:center; padding:15px;}
+
+  :is(button,input,textarea,select,a):focus-visible{outline:2px solid var(--focus); outline-offset:2px;}
+
+  .out{white-space:pre-wrap; font-family:ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
+    font-size:0.82rem; line-height:1.5; background:var(--surface-2); border:1px solid var(--line);
+    border-radius:4px; padding:14px; max-height:340px; overflow:auto; word-break:break-word;}
+  .outhead{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:20px 0 7px; flex-wrap:wrap;}
+  .outhead h3{margin:0; font-size:0.96rem; font-weight:620;}
+  .mini{font:inherit; font-size:0.85rem; cursor:pointer; padding:6px 13px; border-radius:4px;
+    border:1px solid var(--line-strong); background:var(--surface); color:var(--ink);}
+  .mini:hover{border-color:var(--sage-deep);}
+
+  .tcle{background:var(--surface-2); border:1px solid var(--line); border-radius:4px;
+    padding:16px 18px; max-height:380px; overflow-y:auto; font-size:0.9rem; line-height:1.55;}
+  .tcle h4{margin:14px 0 4px; font-size:0.92rem;}
+  .tcle h4:first-child{margin-top:0;}
+  .tcle p{margin:0 0 8px;}
+
+  .modechoice{display:flex; flex-direction:column; gap:12px; margin-top:8px;}
+  .modechoice button{font:inherit; text-align:left; cursor:pointer; padding:18px;
+    background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r); color:var(--ink);}
+  .modechoice button:hover{border-color:var(--sage-deep);}
+  .modechoice b{display:block; font-size:1.05rem; margin-bottom:3px;}
+  .modechoice span{color:var(--ink-soft); font-size:0.9rem;}
+
+  .foot{color:var(--ink-faint); font-size:0.82rem; text-align:center; padding:26px 0 0; line-height:1.6;}
+  .hide{display:none !important;}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important;}}
+  @media print{
+    header.top,.nav,.mini,.rail,.stepmeta,.foot,.noprint{display:none !important;}
+    body{background:#fff; color:#000; font-size:10.5pt;}
+    section.card{border:none; padding:0; margin:0 0 14px; background:#fff;}
+    .out,.tcle{max-height:none; overflow:visible; border:1px solid #999;}
+  }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1>Avaliação de Seguimento</h1>
+      <span class="clinic">LibertaDor · Dor Neuroplástica</span>
+    </div>
+    <div class="rail" id="rail"></div>
+    <div class="stepmeta"><span id="stepName"></span><span id="stepCount"></span></div>
+  </div>
+</header>
+
+<main class="wrap" id="main"></main>
+
+<script>
+/* ============ estado ============ */
+const S = JSON.parse(localStorage.getItem("nrp_aval2") || "{}");
+const save = () => localStorage.setItem("nrp_aval2", JSON.stringify(S));
+let mode = S._mode || null;   /* "pac" | "pro" */
+let step = 0;
+
+const esc = s => String(s ?? "").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const CODE_PREFIX = "LIBERTADOR1.";
+const WHATSAPP_CLINICA = "5571997110506"; /* número que recebe as avaliações */
+
+/* capacidade de download (disponível quando publicado no claude.ai; ausente em arquivo local) */
+let DL = null;
+const dlReady = (async () => {
+  try{ if(typeof claude !== "undefined" && claude.use) DL = await claude.use("downloads"); }catch(e){}
+})();
+
+const PAC_STEPS = [
+  {id:"ident", name:"Identificação"},
+  {id:"hist",  name:"Antes do programa: sua dor"},
+  {id:"prev",  name:"Antes do programa: tratamentos"},
+  {id:"int",   name:"Hoje: intensidade"},
+  {id:"freq",  name:"Hoje: frequência"},
+  {id:"peg",   name:"Hoje: interferência"},
+  {id:"pgic",  name:"Antes e depois"},
+  {id:"med",   name:"Hoje: medicação e técnicas"},
+  {id:"livre", name:"Em suas palavras"},
+  {id:"tcle",  name:"Consentimento"},
+  {id:"doc",   name:"Documento para assinatura"},
+  {id:"envio", name:"Enviar para a clínica"}
+];
+const PRO_STEPS = [
+  {id:"paste", name:"Receber avaliação do paciente"},
+  {id:"prof",  name:"Dados clínicos"},
+  {id:"docs",  name:"Documentos finais"}
+];
+
+/* campos que pertencem ao paciente (vão no código) */
+const PAC_FIELDS = ["nome","hoje","inicioSint","inicioProg","duracaoMeses","locais","padraoAntes",
+ "prev_Medicamentos","prev_Procedimentos","prev_NaoMed","prevOutro","prevResolveu","prevMedicos",
+ "nrsAgora","nrsMedia","nrsPior","freqDias","freqDuracao","freqIncomodo",
+ "pegPrazer","pegAtiv","pegSono","pegTrab","pgic","pgicPct","satisf",
+ "medHoje","medComp","tecnicas","recaidas","recaidaCtx","livreMudou","livreDificil",
+ "tcleConcorda","tcleNome","tcleData"];
+
+const THERAPIES = {
+  "prev_Medicamentos":{label:"Medicamentos", itens:["Analgésicos comuns / anti-inflamatórios","Opioides (tramadol, codeína, morfina)","Antidepressivos (duloxetina, amitriptilina, venlafaxina)","Anticonvulsivantes (pregabalina, gabapentina)","Relaxantes musculares","Corticoide","Cannabis medicinal"]},
+  "prev_Procedimentos":{label:"Procedimentos", itens:["Infiltrações / bloqueios","Radiofrequência","Toxina botulínica","Cirurgia"]},
+  "prev_NaoMed":{label:"Não medicamentosos", itens:["Fisioterapia","RPG","Pilates / musculação","Acupuntura","Quiropraxia / osteopatia","Psicoterapia","Meditação / mindfulness"]}
+};
+
+/* ============ componentes ============ */
+function nrs(key, lo, hi){
+  const v = S[key];
+  let h = '<div class="nrs">';
+  for(let i=0;i<=10;i++) h += `<button type="button" data-k="${key}" data-v="${i}" aria-pressed="${v===i}">${i}</button>`;
+  h += `</div><div class="anchors"><span>${lo}</span><span>${hi}</span></div>`;
+  return h;
+}
+function opts(key, list, row){
+  let h = `<div class="opts${row?" row":""}">`;
+  for(const o of list) h += `<button type="button" data-k="${key}" data-v="${esc(o)}" aria-pressed="${S[key]===o}">${esc(o)}</button>`;
+  return h + "</div>";
+}
+function checks(key, list){
+  const sel = S[key] || [];
+  let h = '<div class="checks">';
+  for(const o of list) h += `<button type="button" data-mk="${key}" data-v="${esc(o)}" aria-pressed="${sel.includes(o)}">${esc(o)}</button>`;
+  return h + "</div>";
+}
+function txt(key, ph, ta){
+  const v = esc(S[key]||"");
+  return ta ? `<textarea data-t="${key}" placeholder="${ph||""}">${v}</textarea>`
+            : `<input type="text" data-t="${key}" value="${v}" placeholder="${ph||""}">`;
+}
+const period = (t, inline) => `<span class="period${inline?" inline":""}">${t}</span>`;
+
+/* ============ telas do paciente ============ */
+function pacBody(id){
+  if(id==="ident") return `
+    <h2>Vamos começar</h2>
+    <p class="lede">São cerca de 5 minutos, para você responder sozinho, com calma. Não há resposta certa ou errada: o que ajuda é o que for verdadeiro, inclusive o que não deu certo. Ao final, você envia o resultado para a clínica pelo WhatsApp.</p>
+    <div class="q"><span class="ask">Seu nome completo</span>${txt("nome")}</div>
+    <div class="q"><span class="ask">Data de hoje</span>
+      <input type="date" data-t="hoje" value="${esc(S.hoje||new Date().toISOString().slice(0,10))}"></div>`;
+
+  if(id==="hist") return `
+    ${period("Período: ANTES de começar o programa")}
+    <h2>Sua história de dor</h2>
+    <p class="lede">Todas as perguntas desta tela são sobre o período anterior ao tratamento aqui na clínica. Se não lembrar a data exata, aproxime o mês e o ano.</p>
+    <div class="q"><span class="ask">Quando a dor começou?<span class="hint">Mês e ano em que os sintomas apareceram pela primeira vez.</span></span>
+      <div class="pair"><div><label>Início dos sintomas</label>
+        <input type="month" data-t="inicioSint" value="${esc(S.inicioSint||"")}"></div>
+      <div><label>Início do programa na clínica</label>
+        <input type="month" data-t="inicioProg" value="${esc(S.inicioProg||"")}"></div></div>
+      <div id="dur" class="derived hide"></div></div>
+    <div class="q"><span class="ask">Onde doía? <span class="hint">Pode marcar mais de um lugar.</span></span>
+      ${checks("locais",["Pescoço","Ombro","Braço / mão","Cabeça / face","Costas (meio)","Lombar","Quadril / nádega","Perna / pé","Peito","Abdome","Dor generalizada"])}</div>
+    <div class="q"><span class="ask">Naquela época, antes de começar aqui, a dor era:</span>
+      ${opts("padraoAntes",["Contínua, todos os dias","Quase todos os dias","Em crises, com períodos sem dor","Ocasional"])}</div>`;
+
+  if(id==="prev"){
+    let b = `${period("Período: ANTES de começar o programa")}
+    <h2>O que você já tinha tentado</h2>
+    <p class="lede">Marque tudo o que você chegou a fazer para essa dor antes de entrar no programa, mesmo que por pouco tempo.</p>`;
+    for(const [k,g] of Object.entries(THERAPIES)) b += `<div class="grouplabel">${g.label}</div>${checks(k,g.itens)}`;
+    b += `<div class="q" style="margin-top:20px"><span class="ask">Outro tratamento não listado</span>${txt("prevOutro","Ex.: neuromodulação, dieta, terapia alternativa…")}</div>
+    <div class="q"><span class="ask">Algum desses tratamentos anteriores resolveu a sua dor?</span>
+      ${opts("prevResolveu",["Nenhum resolveu","Um ou outro ajudou um pouco","Ajudou, mas a dor voltou","Sim, mas parei e voltou"])}</div>
+    <div class="q"><span class="ask">Quantos médicos ou serviços diferentes você procurou por essa dor, antes daqui?</span>
+      ${opts("prevMedicos",["1","2 ou 3","4 a 6","Mais de 6","Perdi a conta"],true)}</div>`;
+    return b;
+  }
+
+  if(id==="int") return `
+    ${period("Período: AGORA e os últimos 7 dias")}
+    <h2>Intensidade da dor hoje</h2>
+    <p class="lede">Daqui em diante as perguntas são sobre o presente. Escala de 0 a 10: 0 é nenhuma dor, 10 é a pior dor que você consegue imaginar.</p>
+    <div class="q">${period("Neste momento", true)}<span class="ask">Qual a intensidade da sua dor agora, enquanto responde?</span>${nrs("nrsAgora","0 · nenhuma dor","a pior possível · 10")}</div>
+    <div class="q">${period("Últimos 7 dias", true)}<span class="ask">Na média da última semana, qual foi a intensidade?</span>${nrs("nrsMedia","0 · nenhuma dor","a pior possível · 10")}</div>
+    <div class="q">${period("Últimos 7 dias", true)}<span class="ask">E no pior momento da última semana?</span>${nrs("nrsPior","0 · nenhuma dor","a pior possível · 10")}</div>`;
+
+  if(id==="freq") return `
+    ${period("Período: os últimos 30 dias")}
+    <h2>Com que frequência a dor aparece hoje em dia</h2>
+    <p class="lede">Muita gente melhora mais na frequência do que na intensidade. Pense no último mês.</p>
+    <div class="q"><span class="ask">No último mês, em quantos dias você sentiu dor?</span>
+      ${opts("freqDias",["Nenhum dia","1 a 5 dias","6 a 10 dias","11 a 20 dias","21 a 29 dias","Todos os dias"])}</div>
+    <div class="q"><span class="ask">Nos dias em que sente dor, ela ocupa que parte do dia?</span>
+      ${opts("freqDuracao",["Alguns minutos","Algumas horas","Metade do dia","A maior parte do dia","O dia inteiro"])}</div>
+    <div class="q"><span class="ask">Com que frequência a dor incomoda a ponto de atrapalhar o que você está fazendo?</span>
+      ${opts("freqIncomodo",["Nunca","Raramente","Às vezes","Frequentemente","O tempo todo"])}</div>`;
+
+  if(id==="peg") return `
+    ${period("Período: os últimos 7 dias")}
+    <h2>O quanto a dor atrapalha hoje</h2>
+    <p class="lede">Pense somente na última semana. De 0 (não atrapalhou nada) a 10 (atrapalhou completamente).</p>
+    <div class="q"><span class="ask">O seu prazer de viver</span>${nrs("pegPrazer","0 · não atrapalhou","atrapalhou tudo · 10")}</div>
+    <div class="q"><span class="ask">As suas atividades em geral</span>${nrs("pegAtiv","0 · não atrapalhou","atrapalhou tudo · 10")}</div>
+    <div class="q"><span class="ask">O seu sono</span>${nrs("pegSono","0 · não atrapalhou","atrapalhou tudo · 10")}</div>
+    <div class="q"><span class="ask">O seu trabalho, dentro ou fora de casa</span>${nrs("pegTrab","0 · não atrapalhou","atrapalhou tudo · 10")}</div>`;
+
+  if(id==="pgic") return `
+    ${period("Comparação: ANTES do programa × HOJE")}
+    <h2>Comparando antes e depois</h2>
+    <p class="lede">Agora sim, compare: como você estava antes de começar o programa e como está hoje, considerando tudo (dor, disposição, o que consegue fazer).</p>
+    <div class="q"><span class="ask">Comparada com antes de começar, a sua situação hoje está:</span>
+      ${opts("pgic",["Muito melhor","Bastante melhor","Um pouco melhor","Sem mudança","Um pouco pior","Bastante pior","Muito pior"])}</div>
+    <div class="q"><span class="ask">Em porcentagem, o quanto a sua dor melhorou do início do programa até hoje?</span>
+      ${opts("pgicPct",["0% (nada)","25%","50%","75%","90%","100% (desapareceu)","Piorou"],true)}</div>
+    <div class="q"><span class="ask">O resultado foi suficiente para você se considerar satisfeito com o tratamento?</span>
+      ${opts("satisf",["Sim, completamente","Sim, em parte","Não"],true)}</div>`;
+
+  if(id==="med") return `
+    ${period("Período: HOJE")}
+    <h2>Medicação e técnicas hoje</h2>
+    <div class="q"><span class="ask">Medicações para dor que você usa atualmente<span class="hint">Nome e dose, se lembrar. Escreva "nenhuma" se não usa mais.</span></span>${txt("medHoje","",true)}</div>
+    <div class="q">${period("Comparação: antes × hoje", true)}<span class="ask">Comparando com antes do programa, o seu uso de medicação para dor hoje está:</span>
+      ${opts("medComp",["Suspenso","Menor","Igual","Maior"],true)}</div>
+    <div class="q"><span class="ask">Você ainda usa as técnicas que aprendeu?<span class="hint">Rastreio somático, escrita expressiva, limites e autocuidado.</span></span>
+      ${opts("tecnicas",["Sim, com frequência","Sim, quando a dor aparece","Raramente","Não uso mais"])}</div>
+    <div class="q">${period("Desde o fim do tratamento", true)}<span class="ask">Depois de ter melhorado, a dor chegou a voltar em algum momento?</span>
+      ${opts("recaidas",["Não","Sim, uma vez","Sim, algumas vezes","Sim, várias vezes"])}</div>
+    <div class="q"><span class="ask">Se voltou, o que você associa a essas voltas?</span>${txt("recaidaCtx","Ex.: estresse no trabalho, briga em casa, esforço físico…",true)}</div>`;
+
+  if(id==="livre") return `
+    <h2>Em suas palavras</h2>
+    <p class="lede">Estas duas respostas costumam ser a parte mais útil de toda a avaliação. Escreva à vontade, do seu jeito.</p>
+    <div class="q">${period("Comparação: antes × hoje", true)}<span class="ask">O que mudou no seu dia a dia depois do programa?<span class="hint">O que você voltou a fazer, ou deixou de evitar.</span></span>${txt("livreMudou","",true)}</div>
+    <div class="q"><span class="ask">Houve alguma parte do tratamento que não funcionou, ou que foi difícil?<span class="hint">Isto é tão útil quanto o que deu certo.</span></span>${txt("livreDificil","",true)}</div>`;
+
+  if(id==="tcle") return `
+    <h2>Autorização para uso dos seus dados</h2>
+    <p class="lede">Leia com calma. Você pode recusar e, mesmo assim, sua avaliação continua valendo normalmente para o seu acompanhamento clínico.</p>
+    <div class="tcle">
+      <h4>Termo de Consentimento Livre e Esclarecido: uso de dados para pesquisa</h4>
+      <p><b>Estudo:</b> Série de casos do programa LibertaDor (Programa de Tratamento da Dor Neuroplástica), que combina terapia psicossomática (PRT e EAET) e, em alguns casos, procedimentos para dor.</p>
+      <p><b>Pesquisador responsável:</b> Dr. Carlos Eduardo Romeu, neurocirurgião, CRM-BA 21678, RQE 14262. Clínica Neuroliv, Av. Tancredo Neves 620, sala 1513, Salvador, BA. Contato: contato@drcarlosromeu.com, (71) 99711-0506.</p>
+      <h4>O que estamos pedindo</h4>
+      <p>Sua autorização para usar, em uma pesquisa científica, as informações do seu prontuário e as respostas desta avaliação. O objetivo é descrever os resultados do programa e publicá-los em revista científica, para que outros médicos e pacientes conheçam esse tipo de tratamento.</p>
+      <h4>Como sua identidade será protegida</h4>
+      <p>Seu nome não aparecerá em nenhuma publicação. Na pesquisa, você será identificado apenas por um código (por exemplo, P07). A planilha que liga o código ao seu nome fica guardada pela equipe da clínica, com acesso restrito, conforme a Lei Geral de Proteção de Dados. Nenhuma informação que permita reconhecer você será publicada.</p>
+      <h4>Riscos e benefícios</h4>
+      <p>O risco é mínimo e se refere à confidencialidade, protegida como descrito acima. Não há benefício direto para você, nem pagamento. O benefício é coletivo: melhorar o conhecimento sobre o tratamento da dor crônica.</p>
+      <h4>Seus direitos</h4>
+      <p>Participar é voluntário. Você pode retirar esta autorização a qualquer momento antes da publicação, sem justificar e sem nenhum prejuízo ao seu atendimento. Você tem direito a assistência integral e a indenização em caso de danos decorrentes da pesquisa, conforme a Resolução CNS 466/2012.</p>
+      <h4>Sobre este termo</h4>
+      <p>Este projeto será apreciado por um Comitê de Ética em Pesquisa (CEP). Se o Comitê solicitar mudanças neste termo, você será contatado para confirmar novamente a sua autorização com o texto atualizado. Dúvidas éticas poderão ser dirigidas ao CEP responsável, cujos dados serão informados assim que definido.</p>
+    </div>
+    <div class="q" style="margin-top:16px">
+      <span class="ask">Você autoriza o uso dos seus dados nas condições acima?</span>
+      ${opts("tcleConcorda",["Sim, autorizo","Não autorizo"],true)}
+    </div>
+    <div class="q"><span class="ask">Assinatura<span class="hint">Digite seu nome completo, como assinatura eletrônica simples. Se preferir, a clínica enviará o PDF para você assinar pelo gov.br.</span></span>
+      ${txt("tcleNome","Nome completo")}
+      <div class="pair" style="margin-top:8px"><div><label>Data</label>
+        <input type="date" data-t="tcleData" value="${esc(S.tcleData||new Date().toISOString().slice(0,10))}"></div></div></div>`;
+
+  if(id==="doc"){
+    const nomeAss = S.tcleNome || S.nome || "____________________________________";
+    return `
+    <h2>Seu documento para assinatura</h2>
+    <p class="lede noprint">Este é o termo preenchido com os seus dados. Toque em "Salvar em PDF" e, na janela que abrir, escolha "Salvar como PDF". Depois você pode imprimir e assinar à mão, ou assinar o PDF eletronicamente no gov.br (assinador.iti.br) e mandar o arquivo para a clínica.</p>
+    <button class="btn primary big noprint" onclick="window.print()">Salvar em PDF / Imprimir</button>
+    <div class="tcle" style="max-height:none; margin-top:16px">
+      <h4>Termo de Consentimento Livre e Esclarecido: uso de dados para pesquisa</h4>
+      <p><b>Estudo:</b> Série de casos do programa LibertaDor (Programa de Tratamento da Dor Neuroplástica), que combina terapia psicossomática (PRT e EAET) e, em alguns casos, procedimentos para dor.</p>
+      <p><b>Pesquisador responsável:</b> Dr. Carlos Eduardo Romeu, neurocirurgião, CRM-BA 21678, RQE 14262. Clínica Neuroliv, Av. Tancredo Neves 620, sala 1513, Salvador, BA. Contato: contato@drcarlosromeu.com, (71) 99711-0506.</p>
+      <p><b>O que autorizo:</b> o uso, em pesquisa científica, das informações do meu prontuário e das respostas da minha avaliação de seguimento, para descrição dos resultados do programa e publicação em revista científica.</p>
+      <p><b>Proteção da identidade:</b> meu nome não aparecerá em nenhuma publicação; serei identificado apenas por um código. A correspondência entre nome e código fica sob guarda restrita da equipe, conforme a Lei Geral de Proteção de Dados. Nenhuma informação que permita me reconhecer será publicada.</p>
+      <p><b>Riscos e benefícios:</b> risco mínimo, restrito à confidencialidade, protegida como descrito. Não há benefício direto nem pagamento; o benefício é coletivo.</p>
+      <p><b>Meus direitos:</b> participação voluntária; posso retirar esta autorização a qualquer momento antes da publicação, sem justificar e sem prejuízo ao meu atendimento; tenho direito a assistência integral e a indenização em caso de danos decorrentes da pesquisa, conforme a Resolução CNS 466/2012.</p>
+      <p><b>Sobre este termo:</b> o projeto será apreciado por um Comitê de Ética em Pesquisa (CEP); se o Comitê solicitar mudanças neste termo, serei contatado para confirmar novamente a autorização com o texto atualizado.</p>
+      <p style="margin-top:14px"><b>Decisão:</b> ${esc(S.tcleConcorda||"(não respondida)")}</p>
+      <p><b>Nome:</b> ${esc(nomeAss)}<br>
+      <b>Data:</b> ${esc(S.tcleData||S.hoje||"____/____/______")}</p>
+      <p style="margin-top:34px">Assinatura do participante: ______________________________________________</p>
+      <p style="margin-top:24px">Assinatura do pesquisador: ______________________________________________<br>
+      Dr. Carlos Eduardo Romeu, CRM-BA 21678</p>
+      <p style="margin-top:14px; font-size:0.82rem">Assinado eletronicamente pelo gov.br? Então as linhas acima ficam em branco e a validade vem da assinatura digital do arquivo (assinador.iti.br).</p>
+    </div>`;
+  }
+
+  if(id==="envio"){
+    const code = buildCode();
+    const msg = `Avaliação LibertaDor de ${S.nome||"(sem nome)"} em ${S.hoje||""}.\n\n${code}\n\nVou anexar o PDF do termo nesta conversa.`;
+    const wa = `https://wa.me/${WHATSAPP_CLINICA}?text=${encodeURIComponent(msg)}`;
+    return `
+    <h2>Pronto. Agora envie para a clínica</h2>
+    <p class="lede">O botão abaixo abre a conversa do WhatsApp da clínica com o seu código de avaliação já escrito. Depois de enviar, anexe na mesma conversa o PDF que você salvou na tela anterior (assinado, se já conseguir).</p>
+    <a class="btn primary big" style="display:block; text-decoration:none" href="${wa}" target="_blank" rel="noopener">Enviar pelo WhatsApp da clínica</a>
+    <p class="lede" style="margin-top:14px">Se o botão não abrir o WhatsApp, copie o código e cole na conversa manualmente:</p>
+    <button class="btn big" data-copy-code>Copiar código da avaliação</button>
+    <div class="outhead"><h3>Código</h3></div>
+    <div class="out" id="codeBox" style="max-height:140px">${esc(code)}</div>
+    <div class="note">Suas respostas ficam neste aparelho até você tocar em enviar. Se esqueceu de salvar o PDF, volte uma tela.</div>
+    <div class="nav"><button class="btn" data-go="-1">Voltar</button>
+      <span style="display:flex;gap:10px">
+      <button class="btn" data-reset>Nova avaliação</button></span></div>`;
+  }
+  return "";
+}
+
+/* ============ telas do profissional ============ */
+function proBody(id){
+  if(id==="paste") return `
+    <h2>Receber avaliação do paciente</h2>
+    <p class="lede">Cole aqui o código que o paciente enviou pelo WhatsApp. As respostas dele serão carregadas e você completa os dados clínicos em seguida.</p>
+    <div class="q"><span class="ask">Código recebido</span>
+      <textarea data-t="_codeIn" placeholder="${CODE_PREFIX}…" style="min-height:120px">${esc(S._codeIn||"")}</textarea></div>
+    <div id="parseMsg" class="note hide"></div>
+    <div class="nav"><button class="btn" data-backstart>Início</button>
+      <button class="btn primary" data-parse>Carregar respostas</button></div>`;
+
+  if(id==="prof") return `
+    <h2>Dados clínicos</h2>
+    <p class="lede">Paciente: <b>${esc(S.nome||"(sem nome)")}</b> · avaliação de ${esc(S.hoje||"?")} · PGIC: ${esc(S.pgic||"?")}</p>
+    <div class="q"><span class="ask">Identificador do estudo<span class="hint">Código sequencial (P01, P02…). É ele que identifica o caso nas análises e na publicação.</span></span>${txt("studyId","P01")}</div>
+    <div class="q"><span class="ask">Diagnóstico principal</span>${txt("dx","Ex.: cervicalgia crônica / dor nociplástica")}</div>
+    <div class="q"><span class="ask">EVA basal documentada em prontuário<span class="hint">Deixe sem marcar se não houver registro. O campo vazio também é um dado.</span></span>
+      ${nrs("evaBasal","0","10")}</div>
+    <div class="q"><span class="ask">Sessões do programa</span>
+      <div class="pair">
+        <div><label>Nº total realizado</label><input type="number" min="0" data-t="nSessoes" value="${esc(S.nSessoes||"")}"></div>
+        <div><label>Data da 1ª sessão</label><input type="date" data-t="dt1" value="${esc(S.dt1||"")}"></div>
+        <div><label>Data da última</label><input type="date" data-t="dtUlt" value="${esc(S.dtUlt||"")}"></div>
+      </div></div>
+    <div class="q"><span class="ask">Modalidades aplicadas</span>
+      ${checks("modalidades",["Programa psicossomático isolado","Procedimento intervencionista","Neuromodulação (VNS)","Neuromodulação (tDCS)","Ajuste farmacológico","EMDR adjuvante"])}</div>
+    <div class="q"><span class="ask">Detalhe dos procedimentos / neuromodulação<span class="hint">Tipo, quantidade e datas.</span></span>${txt("procDet","",true)}</div>
+    <div class="q"><span class="ask">Conduzido por</span>${opts("terapeuta",["Médico responsável","Terapeuta da equipe","Ambos"],true)}</div>
+    <div class="q"><span class="ask">Situação no programa</span>
+      ${opts("statusProg",["Completou","Em curso","Abandonou","Não iniciou"],true)}</div>
+    <div class="q"><span class="ask">Preenchimento do questionário<span class="hint">O padrão é autoaplicado pelo paciente, sozinho. Registre a exceção quando houver.</span></span>
+      ${opts("preenchimento",["Autoaplicado","Com auxílio de terceiro","Lido pelo profissional"],true)}</div>`;
+
+  if(id==="docs") return `
+    <h2>Documentos finais</h2>
+    <p class="lede">Confidencial: a linha da planilha contém o nome do paciente e destina-se ao arquivo interno da equipe, com acesso restrito. Nas análises e em qualquer material que circule, use somente o identificador do estudo.</p>
+    <div class="outhead"><h3>1 · Nota para o prontuário</h3><span><button class="mini dlbtn hide" data-dl="o1" data-fn="nota">Baixar .txt</button> <button class="mini" data-copy="o1">Copiar</button></span></div>
+    <div class="out" id="o1">${esc(notaClinica())}</div>
+    <div class="outhead"><h3>2 · Linha para a planilha da equipe (confidencial)</h3><span><button class="mini dlbtn hide" data-dl="o2" data-fn="linha">Baixar .txt</button> <button class="mini" data-copy="o2">Copiar</button></span></div>
+    <div class="out" id="o2">${esc(linhaDados())}</div>
+    <div class="outhead"><h3>3 · Termo de consentimento assinado</h3><span><button class="mini dlbtn hide" data-dl="o3" data-fn="tcle">Baixar .txt</button> <button class="mini" data-copy="o3">Copiar</button></span></div>
+    <div class="out" id="o3">${esc(tcleRegistro())}</div>
+    <div class="outhead"><h3>4 · Código original, para arquivar na planilha</h3><button class="mini" data-copy="o4">Copiar</button></div>
+    <div class="out" id="o4" style="max-height:120px">${esc(S._codeIn||buildCode())}</div>
+    <div class="note">Arquive: nota no episódio do prontuário (data de hoje); linha na planilha restrita; TCLE em PDF assinado junto aos documentos da pesquisa; e o código do item 4 numa coluna "CÓDIGO AVALIAÇÃO" da aba Pacientes Programa, na linha do paciente. O código é decodificável: com ele arquivado, a linha pode ser regenerada ou atualizada a qualquer momento, pelo app ou diretamente na planilha.</div>
+    <div class="nav"><button class="btn" data-go="-1">Voltar</button>
+      <span style="display:flex;gap:10px">
+      <button class="btn" onclick="window.print()">Imprimir / PDF</button>
+      <button class="btn primary" data-reset>Novo caso</button></span></div>`;
+  return "";
+}
+
+/* ============ código de transporte ============ */
+function buildCode(){
+  const o = {};
+  for(const k of PAC_FIELDS) if(S[k]!==undefined) o[k]=S[k];
+  return CODE_PREFIX + btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+}
+function parseCode(str){
+  const t = (str||"").trim();
+  if(!t.startsWith(CODE_PREFIX)) throw new Error("O código deve começar com "+CODE_PREFIX);
+  const o = JSON.parse(decodeURIComponent(escape(atob(t.slice(CODE_PREFIX.length)))));
+  for(const k of PAC_FIELDS) if(o[k]!==undefined) S[k]=o[k];
+  save();
+}
+
+/* ============ duração ============ */
+function dur(){
+  const el = document.getElementById("dur"); if(!el) return;
+  const a = S.inicioSint, c = S.inicioProg;
+  if(!a || !c){ el.classList.add("hide"); return; }
+  const [ay,am]=a.split("-").map(Number), [cy,cm]=c.split("-").map(Number);
+  const m = (cy-ay)*12 + (cm-am);
+  if(m < 0){ el.textContent = "A data de início do programa está antes do início dos sintomas. Confira."; el.classList.remove("hide"); return; }
+  const anos = Math.floor(m/12), meses = m%12;
+  let t = `Tempo de dor até o início do tratamento: ${m} ${m===1?"mês":"meses"}`;
+  if(anos>=1) t += ` (${anos} ${anos===1?"ano":"anos"}${meses?` e ${meses} ${meses===1?"mês":"meses"}`:""})`;
+  S.duracaoMeses = m; save();
+  el.textContent = t; el.classList.remove("hide");
+}
+
+/* ============ saídas ============ */
+function allPrev(){
+  let r = [];
+  for(const k of Object.keys(THERAPIES)) r = r.concat(S[k] || []);
+  if(S.prevOutro) r.push(S.prevOutro);
+  return r;
+}
+function v(k,d){ return (S[k]===0||S[k]) ? S[k] : (d ?? "não informado"); }
+
+function notaClinica(){
+  const L = [];
+  L.push("AVALIAÇÃO DE SEGUIMENTO · LibertaDor (Programa de Tratamento da Dor Neuroplástica)");
+  L.push(`Paciente: ${v("nome")}   Data: ${v("hoje")}`);
+  L.push("");
+  L.push("HISTÓRIA (período anterior ao programa)");
+  L.push(`Início dos sintomas: ${v("inicioSint")} | Início do programa: ${v("inicioProg")}`);
+  if(S.duracaoMeses!=null) L.push(`Tempo de dor até o tratamento: ${S.duracaoMeses} meses`);
+  L.push(`Localização: ${(S.locais||[]).join(", ") || "não informado"}`);
+  L.push(`Padrão prévio: ${v("padraoAntes")}`);
+  L.push("");
+  L.push("TRATAMENTOS PRÉVIOS");
+  L.push(allPrev().length ? "- " + allPrev().join("\n- ") : "nenhum relatado");
+  L.push(`Resposta aos tratamentos prévios: ${v("prevResolveu")}`);
+  L.push(`Serviços procurados antes: ${v("prevMedicos")}`);
+  L.push("");
+  L.push("DOR ATUAL (NRS 0-10)");
+  L.push(`Agora: ${v("nrsAgora")} | Média 7 dias: ${v("nrsMedia")} | Pior 7 dias: ${v("nrsPior")}`);
+  L.push("");
+  L.push("FREQUÊNCIA (últimos 30 dias)");
+  L.push(`Dias com dor: ${v("freqDias")} | Parte do dia: ${v("freqDuracao")} | Incômodo: ${v("freqIncomodo")}`);
+  L.push("");
+  L.push("INTERFERÊNCIA (PEG-4, últimos 7 dias, 0-10)");
+  L.push(`Prazer de viver: ${v("pegPrazer")} | Atividades: ${v("pegAtiv")} | Sono: ${v("pegSono")} | Trabalho: ${v("pegTrab")}`);
+  const pg = ["pegPrazer","pegAtiv","pegSono","pegTrab"].map(k=>S[k]).filter(x=>x===0||x);
+  if(pg.length===4) L.push(`Média PEG-4: ${(pg.reduce((a,b)=>a+b,0)/4).toFixed(2)}`);
+  L.push("");
+  L.push("MUDANÇA PERCEBIDA (antes do programa × hoje)");
+  L.push(`PGIC: ${v("pgic")} | Melhora estimada: ${v("pgicPct")} | Satisfação: ${v("satisf")}`);
+  L.push("");
+  L.push("MEDICAÇÃO E MANUTENÇÃO (hoje)");
+  L.push(`Em uso: ${v("medHoje")}`);
+  L.push(`Comparado ao início: ${v("medComp")} | Uso das técnicas: ${v("tecnicas")}`);
+  L.push(`Recaídas: ${v("recaidas")}${S.recaidaCtx?` (${S.recaidaCtx})`:""}`);
+  L.push("");
+  L.push("RELATO DO PACIENTE");
+  L.push(`Mudanças no dia a dia: ${v("livreMudou")}`);
+  L.push(`Dificuldades: ${v("livreDificil")}`);
+  L.push("");
+  L.push("DADOS DO PROGRAMA");
+  L.push(`ID estudo: ${v("studyId")} | Diagnóstico: ${v("dx")} | EVA basal em prontuário: ${v("evaBasal","sem registro")}`);
+  L.push(`Sessões: ${v("nSessoes")} | 1ª: ${v("dt1")} | última: ${v("dtUlt")}`);
+  L.push(`Modalidades: ${(S.modalidades||[]).join(", ") || "não informado"}`);
+  if(S.procDet) L.push(`Detalhe: ${S.procDet}`);
+  L.push(`Conduzido por: ${v("terapeuta")} | Situação: ${v("statusProg")} | Preenchimento: ${v("preenchimento","Autoaplicado")}`);
+  L.push("");
+  L.push(`CONSENTIMENTO PARA PESQUISA: ${v("tcleConcorda","não respondido")}${S.tcleNome?` · assinado eletronicamente por ${S.tcleNome} em ${v("tcleData")}`:""}`);
+  return L.join("\n");
+}
+
+function linhaDados(){
+  const cols = {
+    id:S.studyId||"", nome:S.nome||"", data:S.hoje||"", dx:S.dx||"",
+    inicio_sintomas:S.inicioSint||"", inicio_programa:S.inicioProg||"", duracao_meses:S.duracaoMeses??"",
+    locais:(S.locais||[]).join(";"), padrao_antes:S.padraoAntes||"",
+    tratamentos_previos:allPrev().join(";"), n_tratamentos_previos:allPrev().length,
+    resposta_previa:S.prevResolveu||"", servicos_previos:S.prevMedicos||"",
+    eva_basal:S.evaBasal??"", nrs_agora:S.nrsAgora??"", nrs_media:S.nrsMedia??"", nrs_pior:S.nrsPior??"",
+    freq_dias:S.freqDias||"", freq_duracao:S.freqDuracao||"", freq_incomodo:S.freqIncomodo||"",
+    peg_prazer:S.pegPrazer??"", peg_ativ:S.pegAtiv??"", peg_sono:S.pegSono??"", peg_trab:S.pegTrab??"",
+    pgic:S.pgic||"", pgic_pct:S.pgicPct||"", satisfacao:S.satisf||"",
+    med_comp:S.medComp||"", tecnicas:S.tecnicas||"", recaidas:S.recaidas||"",
+    n_sessoes:S.nSessoes||"", dt_primeira:S.dt1||"", dt_ultima:S.dtUlt||"",
+    modalidades:(S.modalidades||[]).join(";"), conduzido_por:S.terapeuta||"", status:S.statusProg||"",
+    preenchimento:S.preenchimento||"Autoaplicado",
+    tcle:S.tcleConcorda||"", tcle_assinatura:S.tcleNome||"", tcle_data:S.tcleData||""
+  };
+  const q = s => `"${String(s).replace(/"/g,'""')}"`;
+  return "CONFIDENCIAL · arquivo interno da equipe · não circular com o nome\n"
+       + Object.keys(cols).join(",") + "\n" + Object.values(cols).map(q).join(",");
+}
+
+function tcleRegistro(){
+  const L = [];
+  L.push("TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO · uso de dados para pesquisa");
+  L.push("Estudo: Série de casos do programa LibertaDor (Programa de Tratamento da Dor Neuroplástica)");
+  L.push("Pesquisador responsável: Dr. Carlos Eduardo Romeu, CRM-BA 21678, RQE 14262 · Clínica Neuroliv, Salvador BA");
+  L.push("");
+  L.push("O participante autorizou o uso das informações do seu prontuário e das respostas da avaliação de");
+  L.push("seguimento para pesquisa científica, com identidade protegida por código, guarda restrita da");
+  L.push("correspondência nome-código (LGPD) e nenhum dado identificável em publicação. Participação");
+  L.push("voluntária, com direito de retirada a qualquer momento antes da publicação, assistência integral e");
+  L.push("indenização conforme Resolução CNS 466/2012. O participante foi informado de que o termo poderá ser");
+  L.push("atualizado por solicitação do Comitê de Ética em Pesquisa, caso em que será contatado para reconfirmar.");
+  L.push("");
+  L.push(`Decisão: ${v("tcleConcorda","não respondido")}`);
+  L.push(`Assinatura eletrônica simples (nome digitado): ${v("tcleNome")}`);
+  L.push(`Data: ${v("tcleData")}`);
+  L.push("");
+  L.push("Para assinatura qualificada, enviar este documento em PDF ao participante via assinador.iti.br (gov.br)");
+  L.push("e arquivar o arquivo assinado junto aos documentos da pesquisa.");
+  return L.join("\n");
+}
+
+/* ============ render ============ */
+function stepsNow(){ return mode==="pro" ? PRO_STEPS : PAC_STEPS; }
+
+function render(){
+  const m = document.getElementById("main");
+  if(!mode){
+    document.getElementById("rail").innerHTML = "";
+    document.getElementById("stepName").textContent = "";
+    document.getElementById("stepCount").textContent = "";
+    m.innerHTML = `<section class="card">
+      <h2>Quem está usando?</h2>
+      <div class="modechoice">
+        <button data-mode="pac"><b>Sou paciente</b><span>Responder a avaliação de seguimento e enviar para a clínica.</span></button>
+        <button data-mode="pro"><b>Sou da equipe</b><span>Receber o código de um paciente, completar os dados clínicos e gerar os documentos.</span></button>
+      </div></section>`;
+    m.querySelectorAll("[data-mode]").forEach(el=>el.addEventListener("click",()=>{
+      mode = el.dataset.mode; S._mode = mode; save(); step = 0; render();
+    }));
+    return;
+  }
+  const steps = stepsNow();
+  const s = steps[step];
+  document.getElementById("rail").innerHTML =
+    steps.map((_,i)=>`<i class="${i<step?"done":i===step?"now":""}"></i>`).join("");
+  document.getElementById("stepName").textContent = s.name;
+  document.getElementById("stepCount").textContent = `${step+1} / ${steps.length}`;
+
+  let b = mode==="pac" ? pacBody(s.id) : proBody(s.id);
+  const isLast = (mode==="pac" && s.id==="envio") || (mode==="pro" && s.id==="docs") || (mode==="pro" && s.id==="paste");
+  if(!isLast){
+    b += `<div class="nav">
+      <button class="btn" data-go="-1" ${step===0?"":""}>${step===0?"Início":"Voltar"}</button>
+      <button class="btn primary" data-go="1">${step===steps.length-2?"Concluir":"Continuar"}</button></div>`;
+  }
+  m.innerHTML = `<section class="card">${b}</section>`;
+  wire(); dur();
+}
+
+/* ============ eventos ============ */
+function wire(){
+  const m = document.getElementById("main");
+  m.querySelectorAll("[data-k]").forEach(el => el.addEventListener("click", () => {
+    const k = el.dataset.k, raw = el.dataset.v;
+    const val = /^\d+$/.test(raw) && el.parentElement.classList.contains("nrs") ? +raw : raw;
+    S[k] = (S[k] === val) ? undefined : val; save();
+    el.parentElement.querySelectorAll("[data-k]").forEach(x =>
+      x.setAttribute("aria-pressed", String(S[k] !== undefined && x.dataset.v === raw && S[k] === val)));
+  }));
+  m.querySelectorAll("[data-mk]").forEach(el => el.addEventListener("click", () => {
+    const k = el.dataset.mk, val = el.dataset.v;
+    const cur = new Set(S[k] || []);
+    cur.has(val) ? cur.delete(val) : cur.add(val);
+    S[k] = [...cur]; save();
+    el.setAttribute("aria-pressed", String(cur.has(val)));
+  }));
+  m.querySelectorAll("[data-t]").forEach(el => el.addEventListener("input", () => {
+    S[el.dataset.t] = el.value; save(); if(el.type === "month") dur();
+  }));
+  m.querySelectorAll("[data-go]").forEach(el => el.addEventListener("click", () => {
+    const d = +el.dataset.go;
+    if(step===0 && d<0){ mode=null; S._mode=undefined; save(); render(); return; }
+    /* trava: paciente que não autorizou nem recusou não passa do TCLE */
+    const steps = stepsNow();
+    if(mode==="pac" && steps[step].id==="tcle" && d>0 && !S.tcleConcorda){
+      alert("Escolha uma das opções de autorização para continuar."); return;
+    }
+    step = Math.max(0, Math.min(steps.length-1, step + d));
+    window.scrollTo({top:0, behavior:"instant"}); render();
+  }));
+  m.querySelectorAll("[data-copy]").forEach(el => el.addEventListener("click", async () => {
+    const t = document.getElementById(el.dataset.copy).textContent;
+    try{ await navigator.clipboard.writeText(t); el.textContent = "Copiado"; }
+    catch{ el.textContent = "Selecione e copie"; }
+    setTimeout(()=>{ el.textContent = "Copiar"; }, 1800);
+  }));
+  const cc = m.querySelector("[data-copy-code]");
+  if(cc) cc.addEventListener("click", async () => {
+    try{ await navigator.clipboard.writeText(buildCode()); cc.textContent = "Copiado. Agora cole no WhatsApp da clínica"; }
+    catch{ cc.textContent = "Selecione o código abaixo e copie"; }
+  });
+  const bp = m.querySelector("[data-parse]");
+  if(bp) bp.addEventListener("click", () => {
+    const msg = document.getElementById("parseMsg");
+    try{
+      parseCode(S._codeIn);
+      step = 1; render();
+    }catch(e){
+      msg.textContent = "Não consegui ler este código: " + e.message;
+      msg.classList.remove("hide");
+    }
+  });
+  const bs = m.querySelector("[data-backstart]");
+  if(bs) bs.addEventListener("click", ()=>{ mode=null; S._mode=undefined; save(); render(); });
+  const r = m.querySelector("[data-reset]");
+  if(r) r.addEventListener("click", () => {
+    if(!confirm("Apagar as respostas e começar de novo?")) return;
+    localStorage.removeItem("nrp_aval2");
+    for(const k of Object.keys(S)) delete S[k];
+    mode = null; step = 0; render();
+  });
+  /* botões de download .txt: aparecem só quando a capacidade existe */
+  dlReady.then(() => {
+    if(!DL) return;
+    m.querySelectorAll(".dlbtn").forEach(el => {
+      el.classList.remove("hide");
+      el.addEventListener("click", async () => {
+        const id = (S.studyId || "caso").replace(/[^\w-]/g,"");
+        const names = {nota:`${id}-nota-prontuario.txt`, linha:`${id}-linha-planilha.txt`, tcle:`${id}-tcle.txt`};
+        try{
+          await DL.save({filename:names[el.dataset.fn]||"documento.txt",
+                         data:document.getElementById(el.dataset.dl).textContent});
+          el.textContent = "Salvo";
+        }catch(e){ el.textContent = e && e.code==="declined" ? "Cancelado" : "Indisponível"; }
+        setTimeout(()=>{ el.textContent = "Baixar .txt"; }, 1800);
+      });
+    });
+  });
+}
+
+render();
+</script>
+
+<div class="wrap">
+  <p class="foot">LibertaDor · Programa de Tratamento da Dor Neuroplástica<br>
+  Clínica Neuroliv · Av. Tancredo Neves 620, sala 1513, Salvador BA<br>
+  Dr. Carlos Eduardo Romeu · CRM-BA 21678 · RQE 14262<br>
+  As respostas ficam somente neste aparelho até você copiar e enviar. Nada é transmitido automaticamente.</p>
+</div>
