@@ -181,6 +181,9 @@
 /* ============ estado ============ */
 const S = JSON.parse(localStorage.getItem("nrp_aval2") || "{}");
 const save = () => localStorage.setItem("nrp_aval2", JSON.stringify(S));
+/* a data padrão mostrada no campo precisa existir no estado mesmo sem edição */
+const HOJE = new Date().toISOString().slice(0,10);
+if(!S.hoje) S.hoje = HOJE;
 let mode = S._mode || null;   /* "pac" | "pro" */
 let step = 0;
 
@@ -649,7 +652,9 @@ function wire(){
   m.querySelectorAll("[data-k]").forEach(el => el.addEventListener("click", () => {
     const k = el.dataset.k, raw = el.dataset.v;
     const val = /^\d+$/.test(raw) && el.parentElement.classList.contains("nrs") ? +raw : raw;
-    S[k] = (S[k] === val) ? undefined : val; save();
+    S[k] = (S[k] === val) ? undefined : val;
+    if(k === "tcleConcorda" && S[k] && !S.tcleData) S.tcleData = HOJE;
+    save();
     el.parentElement.querySelectorAll("[data-k]").forEach(x =>
       x.setAttribute("aria-pressed", String(S[k] !== undefined && x.dataset.v === raw && S[k] === val)));
   }));
