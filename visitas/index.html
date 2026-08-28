@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NRP · Avaliação da visita</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --off:#F0EDE8; --navy:#1B3A4B; --navy-deep:#0F1E26;
+    --sage:#8CA57E; --sage-dark:#40534A; --white:#fff;
+    --sans:"DM Sans",system-ui,Arial,sans-serif;
+    --disp:"Playfair Display",Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{
+    font-family:var(--sans); background:var(--off); color:var(--navy);
+    font-size:20px; line-height:1.6; min-height:100svh;
+  }
+  .tela{display:none; max-width:760px; margin:0 auto; padding:28px 22px 90px}
+  .tela.ativa{display:block}
+  h1{font-family:var(--disp); font-size:30px; line-height:1.2; margin-bottom:6px}
+  h1::after{content:""; display:block; width:52px; height:3px; background:var(--sage); margin-top:12px}
+  .sub{color:#5E6B66; margin:12px 0 22px; font-size:17px}
+  .cartao{background:var(--white); border-radius:14px; box-shadow:0 2px 12px rgba(15,30,38,.07); padding:22px; margin-bottom:16px}
+  label{display:block; font-size:15px; font-weight:700; color:var(--sage-dark); margin:14px 0 6px}
+  input[type=text],input[type=password],input[type=number],input[type=date],select{
+    width:100%; font-family:var(--sans); font-size:19px; padding:13px 14px;
+    border:1px solid rgba(27,58,75,.25); border-radius:9px; background:var(--off); color:var(--navy);
+  }
+  .grade-2{display:grid; grid-template-columns:1fr 1fr; gap:0 14px}
+  .btn{
+    display:block; width:100%; background:var(--sage); color:var(--navy-deep);
+    font-family:var(--sans); font-size:20px; font-weight:700; text-align:center;
+    border:0; border-radius:12px; padding:17px; cursor:pointer; margin-top:20px;
+  }
+  .btn:disabled{opacity:.5}
+  .btn.secundario{background:transparent; border:1.5px solid var(--sage-dark); color:var(--sage-dark)}
+  .aviso{background:#FBEFEA; border-left:4px solid #B0603F; border-radius:0 9px 9px 0; padding:12px 14px; font-size:16px; margin-top:14px; display:none}
+  .topo-fixo{
+    position:sticky; top:0; z-index:10; background:var(--navy-deep); color:var(--off);
+    padding:12px 18px calc(12px + 3px); font-size:15px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .topo-fixo b{font-family:var(--disp); font-size:17px}
+  .progresso{position:absolute; left:0; bottom:0; height:3px; background:var(--sage); width:0%; transition:width .3s}
+
+  /* pergunta única por vez */
+  .pergunta-num{font-size:14px; letter-spacing:.14em; text-transform:uppercase; color:var(--sage-dark); font-weight:700; margin-bottom:10px}
+  .pergunta{font-size:23px; line-height:1.45; font-weight:500; margin-bottom:24px; min-height:3.2em}
+  .opcoes{display:flex; flex-direction:column; gap:12px}
+  .opcoes.numerica{flex-direction:row; flex-wrap:wrap; gap:10px}
+  .op{
+    background:var(--white); border:2px solid rgba(27,58,75,.18); border-radius:12px;
+    padding:16px 18px; font-size:19px; cursor:pointer; text-align:left; font-family:var(--sans);
+    transition:border-color .12s, background .12s;
+  }
+  .opcoes.numerica .op{flex:1 1 calc(20% - 10px); min-width:56px; text-align:center; font-weight:700; font-size:22px; padding:16px 4px}
+  .op.marcada{border-color:var(--sage-dark); background:rgba(140,165,126,.18)}
+  .legenda-num{display:flex; justify-content:space-between; font-size:14px; color:#5E6B66; margin-top:8px}
+  .nav-inferior{display:flex; gap:12px; margin-top:26px}
+  .nav-inferior .btn{margin-top:0}
+  .centro{text-align:center}
+  .icone-ok{font-size:64px; margin:30px 0 10px}
+  .alerta-equipe{background:#FBEFEA; border:1.5px solid #B0603F; border-radius:12px; padding:14px 16px; font-size:16px; margin-top:16px; text-align:left}
+  .fila{font-size:14px; color:#5E6B66; margin-top:18px}
+</style>
+</head>
+<body>
+
+<div class="topo-fixo" id="topoFixo" style="display:none">
+  <span><b>LibertaDor · NRP</b> <span id="topoInfo"></span></span>
+  <span id="topoConta"></span>
+  <div class="progresso" id="barra"></div>
+</div>
+
+<!-- ===== TELA EQUIPE ===== -->
+<section class="tela ativa" id="tela-equipe">
+  <h1>Nova avaliação</h1>
+  <p class="sub">Uso da equipe. Preencha e entregue o tablet ao paciente.</p>
+  <div class="cartao">
+    <label for="eq-senha">Senha da clínica</label>
+    <input id="eq-senha" type="password" autocomplete="off">
+    <label for="eq-codigo">Código do paciente (prontuário)</label>
+    <input id="eq-codigo" type="text" autocomplete="off">
+    <div class="grade-2">
+      <div>
+        <label for="eq-iniciais">Iniciais</label>
+        <input id="eq-iniciais" type="text" maxlength="6" autocomplete="off">
+      </div>
+      <div>
+        <label for="eq-ano">Ano de nascimento</label>
+        <input id="eq-ano" type="number" min="1900" max="2030" inputmode="numeric">
+      </div>
+    </div>
+    <div class="grade-2">
+      <div>
+        <label for="eq-sexo">Sexo</label>
+        <select id="eq-sexo">
+          <option value="F">Feminino</option>
+          <option value="M">Masculino</option>
+          <option value="O">Outro / não informar</option>
+        </select>
+      </div>
+      <div>
+        <label for="eq-visita">Tipo de visita</label>
+        <select id="eq-visita"></select>
+      </div>
+    </div>
+    <div class="grade-2">
+      <div>
+        <label for="eq-sessao">Nº da sessão (opcional)</label>
+        <input id="eq-sessao" type="number" min="1" max="99" inputmode="numeric">
+      </div>
+      <div>
+        <label for="eq-data">Data</label>
+        <input id="eq-data" type="date">
+      </div>
+    </div>
+    <button class="btn" id="btnComecar">Iniciar avaliação</button>
+    <p class="aviso" id="eqAviso"></p>
+    <p class="fila" id="filaPendentes"></p>
+  </div>
+</section>
+
+<!-- ===== TELA ENTREGA ===== -->
+<section class="tela" id="tela-entrega">
+  <div class="cartao centro">
+    <p class="icone-ok">🙂</p>
+    <h1 style="display:inline-block">Agora é com você</h1>
+    <p class="sub" style="margin-top:14px">Vamos fazer algumas perguntas sobre como você está. Não existem respostas certas ou erradas, e você pode responder no seu tempo. Suas respostas ajudam a orientar o seu tratamento.</p>
+    <button class="btn" id="btnPaciente">Começar</button>
+  </div>
+</section>
+
+<!-- ===== TELA INSTRUMENTO (intro) ===== -->
+<section class="tela" id="tela-intro">
+  <div class="cartao">
+    <h1 id="introNome"></h1>
+    <p class="sub" id="introTexto"></p>
+    <button class="btn" id="btnIntroOk">Vamos lá</button>
+  </div>
+</section>
+
+<!-- ===== TELA PERGUNTA ===== -->
+<section class="tela" id="tela-pergunta">
+  <p class="pergunta-num" id="pNum"></p>
+  <p class="pergunta" id="pTexto"></p>
+  <div class="opcoes" id="pOpcoes"></div>
+  <div class="legenda-num" id="pLegenda" style="display:none">
+    <span>0 = nenhuma</span><span>10 = a pior possível</span>
+  </div>
+  <div class="nav-inferior">
+    <button class="btn secundario" id="btnVoltar">Voltar</button>
+    <button class="btn" id="btnProxima" disabled>Próxima</button>
+  </div>
+</section>
+
+<!-- ===== TELA FINAL ===== -->
+<section class="tela" id="tela-fim">
+  <div class="cartao centro">
+    <p class="icone-ok">✅</p>
+    <h1 style="display:inline-block">Tudo certo!</h1>
+    <p class="sub" style="margin-top:14px">Obrigado por responder. Pode devolver o tablet para a equipe.</p>
+    <div class="alerta-equipe" id="alertaEquipe" style="display:none"></div>
+    <button class="btn" id="btnNova">Equipe: nova avaliação</button>
+    <p class="fila" id="fimStatus"></p>
+  </div>
+</section>
+
+<script src="instrumentos.js"></script>
+<script>
+(function(){
+  /* ===== CONFIGURAÇÃO (preencher ao implantar) ===== */
+  var SUPABASE_URL = "https://dzieqeojazibgtqognoj.supabase.co";        // ex.: https://xxxx.supabase.co
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWVxZW9qYXppYmd0cW9nbm9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4MDA0MjYsImV4cCI6MjA5OTM3NjQyNn0.UryeISYaBM-6bOA7HgRXXATRAk1NhEGP2jYTrKDme5Y";   // chave pública (anon) do projeto
+
+  var FILA_KEY = "nrp.fila.v1"; // envios pendentes (offline)
+
+  var visita = null;      // {visitId | null, passcode, dados, offlineId}
+  var sequencia = [];     // instrumentos da visita
+  var iInstr = 0, iItem = 0;
+  var respostas = [];     // respostas do instrumento atual
+  var inicioInstr = 0;
+  var alertas = [];
+
+  var $ = function(id){ return document.getElementById(id); };
+  function tela(id){
+    document.querySelectorAll(".tela").forEach(function(t){ t.classList.remove("ativa"); });
+    $(id).classList.add("ativa");
+    window.scrollTo(0,0);
+  }
+
+  /* ===== RPC Supabase ===== */
+  async function rpc(fn, args){
+    if(!SUPABASE_URL || !SUPABASE_ANON_KEY) return { ok:false, offline:true };
+    try{
+      var c = new AbortController(); var t = setTimeout(function(){c.abort();}, 8000);
+      var r = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + fn, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", "apikey":SUPABASE_ANON_KEY,
+                  "Authorization":"Bearer " + SUPABASE_ANON_KEY },
+        body: JSON.stringify(args), signal: c.signal
+      });
+      clearTimeout(t);
+      if(!r.ok){
+        var e = await r.text();
+        return { ok:false, erro:e, auth: e.indexOf("senha da clinica") >= 0 };
+      }
+      var data = null; try{ data = await r.json(); }catch(_){ }
+      return { ok:true, data:data };
+    }catch(err){ return { ok:false, offline:true }; }
+  }
+
+  /* ===== fila offline ===== */
+  function fila(){ try{ return JSON.parse(localStorage.getItem(FILA_KEY)||"[]"); }catch(e){ return []; } }
+  function salvarFila(f){ try{ localStorage.setItem(FILA_KEY, JSON.stringify(f)); }catch(e){} }
+  function enfileirar(item){ var f=fila(); f.push(item); salvarFila(f); }
+  async function drenarFila(passcode){
+    var f = fila(); if(!f.length) return;
+    var resto = [];
+    for(var i=0;i<f.length;i++){
+      var it = f[i];
+      if(it.tipo === "visita"){
+        var r = await rpc("kiosk_start_visit", Object.assign({p_passcode:passcode}, it.args));
+        if(r.ok && r.data){
+          // reaponta as respostas órfãs desse offlineId
+          f.forEach(function(x){ if(x.tipo==="resposta" && x.offlineId===it.offlineId) x.args.p_visit_id = r.data; });
+        } else { resto.push(it); }
+      } else if(it.tipo === "resposta"){
+        if(!it.args.p_visit_id){ resto.push(it); continue; }
+        var r2 = await rpc("kiosk_save_response", Object.assign({p_passcode:passcode}, it.args));
+        if(!r2.ok) resto.push(it);
+      }
+    }
+    salvarFila(resto);
+    mostrarFila();
+  }
+  function mostrarFila(){
+    var n = fila().length;
+    $("filaPendentes").textContent = n ? ("Há " + n + " registro(s) aguardando internet. Serão enviados na próxima avaliação com conexão.") : "";
+  }
+
+  /* ===== montagem ===== */
+  var selVisita = $("eq-visita");
+  Object.keys(VISITAS).forEach(function(k){
+    var o = document.createElement("option"); o.value = k; o.textContent = VISITAS[k].nome;
+    selVisita.appendChild(o);
+  });
+  $("eq-data").value = new Date().toISOString().slice(0,10);
+  mostrarFila();
+
+  var pendentes = INSTRUMENTOS.filter(function(x){ return x.pendente; });
+  if(pendentes.length){
+    $("eqAviso").style.display = "block";
+    $("eqAviso").textContent = "Aguardando itens oficiais (fora da sequência por enquanto): " +
+      pendentes.map(function(x){ return x.nome.split("(")[0].trim(); }).join(", ") + ".";
+  }
+
+  $("btnComecar").addEventListener("click", async function(){
+    var senha = $("eq-senha").value.trim();
+    var codigo = $("eq-codigo").value.trim();
+    var av = $("eqAviso");
+    if(!senha || !codigo){ av.style.display="block"; av.textContent = "Preencha a senha da clínica e o código do paciente."; return; }
+    this.disabled = true; av.textContent = "";
+
+    var tipo = selVisita.value;
+    sequencia = INSTRUMENTOS.filter(function(x){ return !x.pendente && x.visitas.indexOf(tipo) >= 0; });
+    if(!sequencia.length){ av.style.display="block"; av.textContent="Nenhum instrumento disponível para esta visita."; this.disabled=false; return; }
+
+    var args = {
+      p_code: codigo,
+      p_initials: $("eq-iniciais").value.trim() || null,
+      p_birth_year: parseInt($("eq-ano").value) || null,
+      p_sex: $("eq-sexo").value,
+      p_visit_type: tipo,
+      p_session_number: parseInt($("eq-sessao").value) || null,
+      p_visit_date: $("eq-data").value || null
+    };
+    var offlineId = "off-" + Date.now();
+    var r = await rpc("kiosk_start_visit", Object.assign({p_passcode:senha}, args));
+    this.disabled = false;
+
+    if(!r.ok && r.auth){ av.style.display="block"; av.textContent = "Senha da clínica incorreta."; return; }
+    if(!r.ok && !r.offline){ av.style.display="block"; av.textContent = "Erro ao registrar: " + (r.erro||"desconhecido"); return; }
+
+    var visitId = (r.ok && r.data) ? r.data : null;
+    if(!visitId) enfileirar({ tipo:"visita", offlineId:offlineId, args:args });
+
+    visita = { visitId: visitId, passcode: senha, offlineId: offlineId, tipo: tipo };
+    alertas = [];
+    iInstr = 0;
+    drenarFila(senha); // aproveita a conexão para drenar pendências antigas
+    $("topoFixo").style.display = "flex";
+    atualizarTopo();
+    tela("tela-entrega");
+  });
+
+  $("btnPaciente").addEventListener("click", function(){ abrirInstrumento(); });
+
+  function atualizarTopo(){
+    var total = sequencia.length;
+    $("topoInfo").textContent = "· " + VISITAS[visita.tipo].nome;
+    $("topoConta").textContent = total ? ("Parte " + Math.min(iInstr+1,total) + " de " + total) : "";
+    $("barra").style.width = (iInstr/Math.max(total,1)*100) + "%";
+  }
+
+  function abrirInstrumento(){
+    if(iInstr >= sequencia.length){ return finalizar(); }
+    var ins = sequencia[iInstr];
+    respostas = new Array(ins.itens.length).fill(null);
+    iItem = 0; inicioInstr = Date.now();
+    atualizarTopo();
+    $("introNome").textContent = ins.nome;
+    $("introTexto").textContent = ins.instrucao;
+    tela("tela-intro");
+  }
+  $("btnIntroOk").addEventListener("click", function(){ mostrarItem(); });
+
+  function mostrarItem(){
+    var ins = sequencia[iInstr];
+    var item = ins.itens[iItem];
+    var texto = (typeof item === "string") ? item : item.t;
+    var opcoes = (typeof item === "object" && item.opcoes) ? item.opcoes : ins.opcoes;
+
+    $("pNum").textContent = ins.nome + " · pergunta " + (iItem+1) + " de " + ins.itens.length;
+    $("pTexto").textContent = texto;
+    var box = $("pOpcoes"); box.innerHTML = "";
+    var numerica = ins.tipo === "numerica";
+    box.className = "opcoes" + (numerica ? " numerica" : "");
+    $("pLegenda").style.display = numerica ? "flex" : "none";
+
+    var lista = numerica
+      ? Array.from({length:11}, function(_,i){ return {v:i, t:String(i)}; })
+      : opcoes;
+
+    lista.forEach(function(op){
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "op"; b.textContent = op.t;
+      if(respostas[iItem] === op.v) b.classList.add("marcada");
+      b.addEventListener("click", function(){
+        respostas[iItem] = op.v;
+        box.querySelectorAll(".op").forEach(function(x){ x.classList.remove("marcada"); });
+        b.classList.add("marcada");
+        $("btnProxima").disabled = false;
+      });
+      box.appendChild(b);
+    });
+    $("btnProxima").disabled = (respostas[iItem] === null);
+    $("btnProxima").textContent = (iItem === ins.itens.length-1) ? "Concluir esta parte" : "Próxima";
+    $("btnVoltar").style.visibility = (iItem === 0) ? "hidden" : "visible";
+    tela("tela-pergunta");
+  }
+
+  $("btnVoltar").addEventListener("click", function(){ if(iItem>0){ iItem--; mostrarItem(); } });
+  $("btnProxima").addEventListener("click", async function(){
+    var ins = sequencia[iInstr];
+    if(iItem < ins.itens.length - 1){ iItem++; mostrarItem(); return; }
+
+    // fim do instrumento: calcula e grava
+    var res = ins.escore(respostas.slice());
+    if(ins.id === "phq9" && respostas[8] > 0){
+      alertas.push("PHQ-9: item 9 positivo (valor " + respostas[8] + "). Conduta da equipe antes da saída do paciente.");
+    }
+    var args = {
+      p_visit_id: visita.visitId,
+      p_instrument: ins.id,
+      p_answers: JSON.stringify ? respostasParaJson(ins, respostas) : respostas,
+      p_score: (res.score === null || res.score === undefined) ? null : res.score,
+      p_subscores: res.subscores || null,
+      p_duration_seconds: Math.round((Date.now() - inicioInstr)/1000)
+    };
+    var r = await rpc("kiosk_save_response", Object.assign({p_passcode:visita.passcode}, args));
+    if(!r.ok){
+      enfileirar({ tipo:"resposta", offlineId: visita.offlineId, args: args });
+    }
+    iInstr++;
+    abrirInstrumento();
+  });
+
+  function respostasParaJson(ins, r){
+    var out = {};
+    r.forEach(function(v,i){ out["i" + (i+1)] = v; });
+    return out;
+  }
+
+  function finalizar(){
+    $("barra").style.width = "100%";
+    $("topoConta").textContent = "Concluído";
+    var pend = fila().length;
+    $("fimStatus").textContent = pend ? (pend + " registro(s) guardados no aparelho, aguardando internet.") : "Todas as respostas foram enviadas.";
+    if(alertas.length){
+      var a = $("alertaEquipe");
+      a.style.display = "block";
+      a.innerHTML = "<b>Atenção da equipe:</b><br>" + alertas.join("<br>");
+    } else {
+      $("alertaEquipe").style.display = "none";
+    }
+    tela("tela-fim");
+  }
+
+  $("btnNova").addEventListener("click", function(){
+    // limpa só os campos do paciente; a senha fica para agilizar a fila da manhã
+    ["eq-codigo","eq-iniciais","eq-ano","eq-sessao"].forEach(function(id){ $(id).value = ""; });
+    $("topoFixo").style.display = "none";
+    $("eqAviso").style.display = "none";
+    mostrarFila();
+    tela("tela-equipe");
+  });
+})();
+</script>
+</body>
+</html>
