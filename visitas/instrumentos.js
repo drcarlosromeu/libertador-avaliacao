@@ -101,9 +101,13 @@ const INSTRUMENTOS = [
 
   {
     id: "csi",
-    nome: "Inventário de Sensibilização Central (BR-CSI)",
-    pendente: true,
-    nota_pendencia: "Copiar os 25 itens e as opções da versão brasileira validada (validação de Caumo e cols.). Escore: soma 0-100.",
+    nome: "Questionário de Sensibilização Central",
+    // Fonte OFICIAL: BP-CSI (grupo Dor & Neuromodulação, HCPA; validação Caumo
+    // e cols. 2017, J Pain Res 10:2109-2122), PDF distribuído pelo detentor do
+    // instrumento (PRIDE, pridedallas.com). Cópia em docs/fontes-instrumentos/.
+    // Nota: no PDF oficial o item 20 está numerado "0." por erro tipográfico da
+    // própria fonte; a posição entre os itens 19 e 21 confirma que é o item 20.
+    instrucao: "Os sintomas avaliados por este questionário se referem a sua presença diária ou na maioria dos dias dos últimos três meses. Escolha a melhor resposta para cada questão.",
     tipo: "likert",
     opcoes: [
       { v: 0, t: "Nunca" },
@@ -112,11 +116,38 @@ const INSTRUMENTOS = [
       { v: 3, t: "Frequentemente" },
       { v: 4, t: "Sempre" },
     ],
-    itens: [],
+    itens: [
+      "Sinto-me cansado(a) ao acordar pela manhã.",
+      "Sinto que minha musculatura está enrijecida e dolorida.",
+      "Tenho crises de ansiedade.",
+      "Costumo apertar (ranger) os dentes.",
+      "Tenho diarreia e/ou prisão de ventre.",
+      "Preciso de ajuda para fazer as tarefas diárias.",
+      "Sou sensível à luminosidade excessiva.",
+      "Canso-me facilmente ao realizar atividades diárias que exigem algum esforço físico.",
+      "Sinto dor em todo o corpo.",
+      "Tenho dores de cabeça.",
+      "Sinto desconforto e/ou ardência ao urinar.",
+      "Durmo mal.",
+      "Tenho dificuldade para me concentrar.",
+      "Tenho problemas de pele como ressecamento, coceira e vermelhidão.",
+      "O estresse piora meus sintomas.",
+      "Me sinto triste ou deprimido(a).",
+      "Tenho pouca energia.",
+      "Tenho tensão muscular no pescoço e nos ombros.",
+      "Tenho dor no queixo.",
+      "Fico enjoado(a) e tonto(a) com cheiros como o de perfumes.",
+      "Preciso urinar frequentemente.",
+      "Quando vou dormir à noite sinto minhas pernas inquietas e desconfortáveis.",
+      "Tenho dificuldade para me lembrar das coisas.",
+      "Sofri trauma emocional na infância.",
+      "Tenho dor na região pélvica.",
+    ],
     visitas: ["inicial", "alta", "seguimento4m"],
     escore(r) {
       const soma = r.reduce((a, b) => a + b, 0);
-      return { score: soma, subscores: { corte40: soma >= 40 } };
+      const faixa = soma < 30 ? "subclínico" : soma < 40 ? "leve" : soma < 50 ? "moderado" : soma < 60 ? "grave" : "extremo";
+      return { score: soma, subscores: { faixa: faixa, corte40: soma >= 40 } };
     },
   },
 
@@ -170,15 +201,84 @@ const INSTRUMENTOS = [
 
   {
     id: "whoqol",
-    nome: "Qualidade de vida (WHOQOL-bref)",
-    pendente: true,
-    nota_pendencia: "Copiar os 26 itens da versão brasileira oficial (Fleck e cols.) após o registro no grupo WHOQOL. Cada item tem escala própria de 5 pontos; domínios físico, psicológico, relações sociais e meio ambiente transformados 0-100 pela sintaxe oficial (itens 3, 4 e 26 invertidos).",
+    nome: "Qualidade de vida (WHOQOL-abreviado)",
+    // Fonte OFICIAL: WHOQOL-abreviado, versão em português do Grupo WHOQOL
+    // Brasil (Fleck e cols., UFRGS/OMS), PDF do site oficial do grupo
+    // (ufrgs.br/qualidep). Cópia + sintaxe de escore em docs/fontes-instrumentos/.
+    // Escore: itens 3, 4 e 26 invertidos; domínios conforme o manual da OMS
+    // (físico 3,4,10,15,16,17,18; psicológico 5,6,7,11,19,26; relações 20,21,22;
+    // ambiente 8,9,12,13,14,23,24,25), transformados para 0-100.
+    // OBS: a sintaxe SPSS distribuída pelo grupo omite o item 19 do domínio
+    // psicológico; o manual oficial da OMS o inclui, e este app segue o manual.
+    instrucao: "Este questionário é sobre como você se sente a respeito de sua qualidade de vida, saúde e outras áreas de sua vida. Responda pensando nas duas últimas semanas. Se não tiver certeza sobre que resposta dar, escolha a que lhe parece mais apropriada.",
     tipo: "likert",
     opcoes: [],
-    itens: [],
+    itens: (function () {
+      const intensidade = [
+        { v: 1, t: "Nada" }, { v: 2, t: "Muito pouco" }, { v: 3, t: "Mais ou menos" },
+        { v: 4, t: "Bastante" }, { v: 5, t: "Extremamente" }];
+      const capacidade = [
+        { v: 1, t: "Nada" }, { v: 2, t: "Muito pouco" }, { v: 3, t: "Médio" },
+        { v: 4, t: "Muito" }, { v: 5, t: "Completamente" }];
+      const satisfacao = [
+        { v: 1, t: "Muito insatisfeito(a)" }, { v: 2, t: "Insatisfeito(a)" },
+        { v: 3, t: "Nem satisfeito(a) nem insatisfeito(a)" },
+        { v: 4, t: "Satisfeito(a)" }, { v: 5, t: "Muito satisfeito(a)" }];
+      return [
+        { t: "Como você avaliaria sua qualidade de vida?", opcoes: [
+          { v: 1, t: "Muito ruim" }, { v: 2, t: "Ruim" }, { v: 3, t: "Nem ruim nem boa" },
+          { v: 4, t: "Boa" }, { v: 5, t: "Muito boa" }] },
+        { t: "Quão satisfeito(a) você está com a sua saúde?", opcoes: satisfacao },
+        { t: "Em que medida você acha que sua dor (física) impede você de fazer o que você precisa?", opcoes: intensidade },
+        { t: "O quanto você precisa de algum tratamento médico para levar sua vida diária?", opcoes: intensidade },
+        { t: "O quanto você aproveita a vida?", opcoes: intensidade },
+        { t: "Em que medida você acha que a sua vida tem sentido?", opcoes: intensidade },
+        { t: "O quanto você consegue se concentrar?", opcoes: intensidade },
+        { t: "O quanto você se sente em segurança em sua vida diária?", opcoes: intensidade },
+        { t: "Quão saudável é o seu ambiente físico (clima, barulho, poluição, atrativos)?", opcoes: intensidade },
+        { t: "Você tem energia suficiente para seu dia-a-dia?", opcoes: capacidade },
+        { t: "Você é capaz de aceitar sua aparência física?", opcoes: capacidade },
+        { t: "Você tem dinheiro suficiente para satisfazer suas necessidades?", opcoes: capacidade },
+        { t: "Quão disponíveis para você estão as informações que precisa no seu dia-a-dia?", opcoes: capacidade },
+        { t: "Em que medida você tem oportunidades de atividade de lazer?", opcoes: capacidade },
+        { t: "Quão bem você é capaz de se locomover?", opcoes: [
+          { v: 1, t: "Muito ruim" }, { v: 2, t: "Ruim" }, { v: 3, t: "Nem ruim nem bom" },
+          { v: 4, t: "Bom" }, { v: 5, t: "Muito bom" }] },
+        { t: "Quão satisfeito(a) você está com o seu sono?", opcoes: satisfacao },
+        { t: "Quão satisfeito(a) você está com sua capacidade de desempenhar as atividades do seu dia-a-dia?", opcoes: satisfacao },
+        { t: "Quão satisfeito(a) você está com sua capacidade para o trabalho?", opcoes: satisfacao },
+        { t: "Quão satisfeito(a) você está consigo mesmo?", opcoes: satisfacao },
+        { t: "Quão satisfeito(a) você está com suas relações pessoais (amigos, parentes, conhecidos, colegas)?", opcoes: satisfacao },
+        { t: "Quão satisfeito(a) você está com sua vida sexual?", opcoes: satisfacao },
+        { t: "Quão satisfeito(a) você está com o apoio que você recebe de seus amigos?", opcoes: satisfacao },
+        { t: "Quão satisfeito(a) você está com as condições do local onde mora?", opcoes: satisfacao },
+        { t: "Quão satisfeito(a) você está com o seu acesso aos serviços de saúde?", opcoes: satisfacao },
+        { t: "Quão satisfeito(a) você está com o seu meio de transporte?", opcoes: satisfacao },
+        { t: "Com que frequência você tem sentimentos negativos tais como mau humor, desespero, ansiedade, depressão?", opcoes: [
+          { v: 1, t: "Nunca" }, { v: 2, t: "Algumas vezes" }, { v: 3, t: "Frequentemente" },
+          { v: 4, t: "Muito frequentemente" }, { v: 5, t: "Sempre" }] },
+      ];
+    })(),
     visitas: ["inicial", "alta"],
     escore(r) {
-      return { score: null, subscores: { pendente_sintaxe_oficial: true } };
+      const v = r.slice();
+      [2, 3, 25].forEach(function (i) { v[i] = 6 - v[i]; }); // itens 3, 4 e 26 invertidos
+      const dom = function (idx) {
+        const soma = idx.reduce(function (a, i) { return a + v[i - 1]; }, 0);
+        const media = soma / idx.length;
+        return Math.round((media * 4 - 4) * (100 / 16) * 10) / 10; // 0 a 100
+      };
+      return {
+        score: null,
+        subscores: {
+          fisico: dom([3, 4, 10, 15, 16, 17, 18]),
+          psicologico: dom([5, 6, 7, 11, 19, 26]),
+          relacoes: dom([20, 21, 22]),
+          ambiente: dom([8, 9, 12, 13, 14, 23, 24, 25]),
+          qv_geral_1a5: r[0],
+          satisfacao_saude_1a5: r[1],
+        },
+      };
     },
   },
 ];
