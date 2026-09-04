@@ -37,7 +37,20 @@
   .btn.suave{background:transparent; color:var(--sage-dark); border:1.5px solid var(--sage-dark)}
   .btn:disabled{opacity:.5}
   .erro{color:var(--serio); font-size:14px; margin-top:10px; min-height:1.2em}
+  .aviso{color:var(--sage-dark); font-size:14px; margin-top:10px}
   .tela{display:none} .tela.ativa{display:block}
+
+  .senha-wrap{position:relative}
+  .senha-wrap input{padding-right:46px}
+  .olho{position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:0; cursor:pointer; padding:6px; color:var(--ink-3); line-height:0; border-radius:6px}
+  .olho:hover,.olho:focus-visible{color:var(--navy); outline:none; background:rgba(27,58,75,.06)}
+  .olho svg{width:20px; height:20px}
+  .olho .ic-off{display:none}
+  .olho[aria-pressed=true] .ic-on{display:none}
+  .olho[aria-pressed=true] .ic-off{display:block}
+  .link-suave{background:none; border:0; color:var(--sage-dark); font-family:var(--sans); font-size:14px; cursor:pointer; text-decoration:underline; padding:0; margin-top:14px; display:inline-block}
+  .acoes-login{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:14px}
+  .acoes-login .link-suave{margin-top:0}
 
   .busca{display:flex; gap:10px; margin-bottom:14px}
   .busca input{flex:1}
@@ -110,9 +123,65 @@
     <label for="lg-email">E-mail</label>
     <input id="lg-email" type="email" autocomplete="username">
     <label for="lg-senha">Senha</label>
-    <input id="lg-senha" type="password" autocomplete="current-password">
+    <div class="senha-wrap">
+      <input id="lg-senha" type="password" autocomplete="current-password">
+      <button type="button" class="olho" data-alvo="lg-senha" aria-pressed="false" aria-label="Mostrar senha" title="Mostrar senha">
+        <svg class="ic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="ic-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"/><path d="M9.9 5.1A10.5 10.5 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1"/><path d="M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.1-.9"/></svg>
+      </button>
+    </div>
     <p class="erro" id="lgErro"></p>
-    <button class="btn" id="btnEntrar">Entrar</button>
+    <div class="acoes-login">
+      <button class="btn" id="btnEntrar">Entrar</button>
+      <button type="button" class="link-suave" id="btnEsqueci">Esqueci a senha</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ESQUECI A SENHA ===== -->
+<section class="tela" id="tela-esqueci">
+  <h1>Redefinir senha</h1>
+  <p class="sub">Enviamos um link para o seu e-mail. Ao abrir, você escolhe uma senha nova.</p>
+  <div class="cartao" style="max-width:420px">
+    <div id="esqueciForm">
+      <label for="es-email">E-mail</label>
+      <input id="es-email" type="email" autocomplete="username">
+      <p class="erro" id="esErro"></p>
+      <div class="acoes-login">
+        <button class="btn" id="btnEnviarLink">Enviar link</button>
+        <button type="button" class="link-suave" id="btnVoltarLogin">Voltar</button>
+      </div>
+    </div>
+    <div id="esqueciOk" style="display:none">
+      <p class="aviso">Se este e-mail estiver cadastrado, o link chega em instantes. Ele vale por 60 minutos. Confira também a caixa de spam.</p>
+      <button type="button" class="link-suave" id="btnVoltarLogin2">Voltar para o login</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== NOVA SENHA (chegada pelo link do e-mail) ===== -->
+<section class="tela" id="tela-nova-senha">
+  <h1>Nova senha</h1>
+  <p class="sub">Escolha a senha que vai usar para entrar no painel.</p>
+  <div class="cartao" style="max-width:420px">
+    <label for="ns-senha">Nova senha</label>
+    <div class="senha-wrap">
+      <input id="ns-senha" type="password" autocomplete="new-password">
+      <button type="button" class="olho" data-alvo="ns-senha" aria-pressed="false" aria-label="Mostrar senha" title="Mostrar senha">
+        <svg class="ic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="ic-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"/><path d="M9.9 5.1A10.5 10.5 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1"/><path d="M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.1-.9"/></svg>
+      </button>
+    </div>
+    <label for="ns-senha2">Repita a nova senha</label>
+    <div class="senha-wrap">
+      <input id="ns-senha2" type="password" autocomplete="new-password">
+      <button type="button" class="olho" data-alvo="ns-senha2" aria-pressed="false" aria-label="Mostrar senha" title="Mostrar senha">
+        <svg class="ic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="ic-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"/><path d="M9.9 5.1A10.5 10.5 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1"/><path d="M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.1-.9"/></svg>
+      </button>
+    </div>
+    <p class="erro" id="nsErro"></p>
+    <button class="btn" id="btnSalvarSenha">Salvar e entrar</button>
   </div>
 </section>
 
@@ -559,15 +628,83 @@
     formNova();
   });
 
+  /* ===== mostrar/ocultar senha ===== */
+  document.querySelectorAll(".olho").forEach(function(b){
+    b.addEventListener("click", function(){
+      var campo = $(b.getAttribute("data-alvo"));
+      var mostrar = campo.type === "password";
+      campo.type = mostrar ? "text" : "password";
+      b.setAttribute("aria-pressed", mostrar ? "true" : "false");
+      b.setAttribute("aria-label", mostrar ? "Ocultar senha" : "Mostrar senha");
+      b.title = mostrar ? "Ocultar senha" : "Mostrar senha";
+      campo.focus();
+    });
+  });
+
   /* ===== sessão ===== */
+  function msgAuth(e){
+    var m = (e && e.message) || "";
+    if(/invalid login credentials/i.test(m)) return "E-mail ou senha incorretos.";
+    if(/email not confirmed/i.test(m)) return "E-mail ainda não confirmado. Use \"Esqueci a senha\" para receber um link.";
+    if(/rate limit|too many/i.test(m)) return "Muitas tentativas. Aguarde alguns minutos e tente de novo.";
+    if(/at least|password should/i.test(m)) return "A senha precisa ter pelo menos 8 caracteres.";
+    if(/same password|different from the old/i.test(m)) return "A nova senha precisa ser diferente da anterior.";
+    if(/session|not logged in|auth session missing/i.test(m)) return "O link expirou ou já foi usado. Peça um novo em \"Esqueci a senha\".";
+    return m || "Erro desconhecido.";
+  }
+  function irParaLogin(){ $("lgErro").textContent = ""; tela("tela-login"); $("lg-email").focus(); }
+
   $("btnEntrar").addEventListener("click", async function(){
     var err = $("lgErro"); err.textContent = "";
     this.disabled = true;
     var r = await sb.auth.signInWithPassword({ email:$("lg-email").value.trim(), password:$("lg-senha").value });
     this.disabled = false;
-    if(r.error){ err.textContent = "Não foi possível entrar: "+r.error.message; return; }
+    if(r.error){ err.textContent = "Não foi possível entrar: "+msgAuth(r.error); return; }
     await entrar(r.data.user);
   });
+  $("lg-senha").addEventListener("keydown", function(e){ if(e.key === "Enter") $("btnEntrar").click(); });
+
+  /* esqueci a senha */
+  $("btnEsqueci").addEventListener("click", function(){
+    $("es-email").value = $("lg-email").value.trim();
+    $("esErro").textContent = "";
+    $("esqueciForm").style.display = "block";
+    $("esqueciOk").style.display = "none";
+    tela("tela-esqueci");
+    $("es-email").focus();
+  });
+  $("btnVoltarLogin").addEventListener("click", irParaLogin);
+  $("btnVoltarLogin2").addEventListener("click", irParaLogin);
+  $("btnEnviarLink").addEventListener("click", async function(){
+    var err = $("esErro"); err.textContent = "";
+    var email = $("es-email").value.trim();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ err.textContent = "Informe um e-mail válido."; return; }
+    this.disabled = true;
+    // volta para esta mesma página; o Supabase precisa ter a URL na lista de redirecionamento
+    var voltar = location.origin + location.pathname;
+    var r = await sb.auth.resetPasswordForEmail(email, { redirectTo: voltar });
+    this.disabled = false;
+    if(r.error){ err.textContent = "Não foi possível enviar: "+msgAuth(r.error); return; }
+    $("esqueciForm").style.display = "none";
+    $("esqueciOk").style.display = "block";
+  });
+
+  /* nova senha (chegada pelo link do e-mail) */
+  $("btnSalvarSenha").addEventListener("click", async function(){
+    var err = $("nsErro"); err.textContent = "";
+    var s1 = $("ns-senha").value, s2 = $("ns-senha2").value;
+    if(s1.length < 8){ err.textContent = "A senha precisa ter pelo menos 8 caracteres."; return; }
+    if(s1 !== s2){ err.textContent = "As duas senhas não conferem."; return; }
+    this.disabled = true;
+    var r = await sb.auth.updateUser({ password: s1 });
+    this.disabled = false;
+    if(r.error){ err.textContent = "Não foi possível salvar: "+msgAuth(r.error); return; }
+    $("ns-senha").value = ""; $("ns-senha2").value = "";
+    // limpa o token do link da barra de endereço
+    if(location.hash) history.replaceState(null, "", location.pathname + location.search);
+    await entrar(r.data.user);
+  });
+  $("ns-senha2").addEventListener("keydown", function(e){ if(e.key === "Enter") $("btnSalvarSenha").click(); });
   async function entrar(user){
     var s = await sb.schema("clinic").from("staff").select("full_name, role").eq("user_id", user.id).single();
     if(s.error || !s.data){ $("lgErro").textContent = "Esta conta não está cadastrada na equipe."; await sb.auth.signOut(); return; }
@@ -595,8 +732,23 @@
       '<p class="erro">Configuração pendente: preencher SUPABASE_URL e SUPABASE_ANON_KEY no início do script.</p>');
   } else {
     sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // chegada pelo link do e-mail: #access_token=...&type=recovery  ou  #error=...&error_description=...
+    var hash = new URLSearchParams(location.hash.replace(/^#/, ""));
+    var recuperando = hash.get("type") === "recovery";
+    if(hash.get("error")){
+      var desc = hash.get("error_description") || hash.get("error");
+      $("lgErro").textContent = /expired|invalid/i.test(desc)
+        ? "O link expirou ou já foi usado. Peça um novo em \"Esqueci a senha\"."
+        : "Não foi possível abrir o link: " + desc;
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+    sb.auth.onAuthStateChange(function(evento){
+      if(evento === "PASSWORD_RECOVERY"){ recuperando = true; tela("tela-nova-senha"); $("ns-senha").focus(); }
+    });
     sb.auth.getSession().then(function(r){
-      if(r.data.session) entrar(r.data.session.user);
+      if(!r.data.session) return;
+      if(recuperando){ tela("tela-nova-senha"); $("ns-senha").focus(); }
+      else entrar(r.data.session.user);
     });
   }
 })();
