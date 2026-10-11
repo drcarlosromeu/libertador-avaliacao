@@ -182,7 +182,7 @@
     <div class="apoio" id="apoioPaciente" style="display:none">
       <b>Você não está sozinho(a).</b> Se em algum momento pensar em se machucar, ligue agora para o
       <b>188</b> (CVV, 24 horas, gratuito) ou para o <b>192</b> (SAMU), ou vá a uma emergência.
-      Converse também com a equipe da clínica na sua próxima sessão, ou antes, pelo WhatsApp.
+      Converse também com a equipe do Dr. Carlos Romeu na sua próxima sessão, ou antes, pelo WhatsApp.
     </div>
     <button class="btn" id="btnNova">Equipe: nova avaliação</button>
     <p class="fila" id="fimStatus"></p>
@@ -434,7 +434,7 @@
     if(visita.link){
       rpc("link_complete", { p_token: visita.link });
       document.querySelector("#tela-fim .sub").textContent =
-        "Obrigado por responder. Suas respostas já chegaram à equipe da clínica. Pode fechar esta página.";
+        "Obrigado por responder. Suas respostas já chegaram à equipe do Dr. Carlos Romeu. Pode fechar esta página.";
       $("btnNova").style.display = "none";
       $("fimStatus").textContent = "";
       $("alertaEquipe").style.display = "none";
@@ -466,11 +466,11 @@
   /* ===== modo link (paciente responde pelo próprio celular) ===== */
   function linkIndisponivel(status){
     var txt = {
-      expirado: ["Este link expirou", "Os links de questionário valem por 3 dias. Peça um novo à equipe da clínica pelo WhatsApp."],
+      expirado: ["Este link expirou", "Os links de questionário valem por 3 dias. Peça um novo à equipe do Dr. Carlos Romeu pelo WhatsApp."],
       concluido: ["Questionário já respondido", "Recebemos suas respostas. Obrigado! Pode fechar esta página."],
-      invalido: ["Link não encontrado", "Confira se o link foi copiado inteiro, ou peça um novo à equipe da clínica pelo WhatsApp."],
+      invalido: ["Link não encontrado", "Confira se o link foi copiado inteiro, ou peça um novo à equipe do Dr. Carlos Romeu pelo WhatsApp."],
       rede: ["Sem conexão", "Não consegui abrir o questionário. Verifique a internet e tente de novo."]
-    }[status] || ["Link indisponível", "Peça um novo link à equipe da clínica."];
+    }[status] || ["Link indisponível", "Peça um novo link à equipe do Dr. Carlos Romeu."];
     $("topoFixo").style.display = "none";
     $("linkTitulo").textContent = txt[0];
     $("linkTexto").textContent = txt[1];
