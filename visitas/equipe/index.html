@@ -286,7 +286,7 @@
             </select>
           </div>
           <div>
-            <label for="nt-sessao">Nº sessão</label>
+            <label for="nt-sessao">Nº da sessão</label>
             <input id="nt-sessao" type="number" min="1" max="99">
           </div>
           <div>
@@ -294,6 +294,7 @@
             <input id="nt-data" type="date">
           </div>
         </div>
+        <p class="sub" id="ntSessaoDica" style="margin:6px 0 0"></p>
         <label>Técnicas na sessão</label>
         <div class="checks" id="ntTecs"></div>
         <label for="nt-texto">Evolução, impressões e plano</label>
@@ -836,10 +837,18 @@
   function getTecs(){
     return [].slice.call(document.querySelectorAll("#ntTecs input:checked")).map(function(c){ return c.value; });
   }
-  function proximaSessao(){
+  function ultimaSessao(){
     var m = 0;
-    (atual.notes||[]).forEach(function(n){ if(n.session_number > m) m = n.session_number; });
-    return m + 1;
+    (atual.notes||[]).forEach(function(n){ if(n.kind !== "retificacao" && n.session_number > m) m = n.session_number; });
+    return m;
+  }
+  // o número da sessão é sempre informado pela terapeuta: o paciente pode ter
+  // entrado no sistema com o programa já em andamento
+  function dicaSessao(){
+    var u = ultimaSessao();
+    $("ntSessaoDica").textContent = u
+      ? "Última sessão registrada aqui: " + u + ". Confira e informe o número desta."
+      : "Primeira nota deste paciente no sistema: informe em que sessão do programa ele está (ex.: 6, se já fez 5).";
   }
   function marcarEmEdicao(id){
     document.querySelectorAll(".nota").forEach(function(x){ x.classList.toggle("em-edicao", x.dataset.nota === id); });
@@ -851,7 +860,8 @@
     $("tituloForm").textContent = "Adicionar sessão";
     $("contextoForm").style.display = "none";
     $("nt-tipo").disabled = false; $("nt-tipo").value = "evolucao";
-    $("nt-sessao").value = proximaSessao();
+    $("nt-sessao").value = "";
+    dicaSessao();
     $("nt-data").value = new Date().toISOString().slice(0,10);
     setTecs([]); $("nt-texto").value = ""; $("ntErro").textContent = "";
     $("btnSalvarNota").textContent = "Registrar sessão";
@@ -867,6 +877,7 @@
     ctx.textContent = "Edição aberta por mais " + horasRestantes(n) + "h. Depois disso, apenas retificação.";
     $("nt-tipo").value = n.kind; $("nt-tipo").disabled = false;
     $("nt-sessao").value = n.session_number || "";
+    $("ntSessaoDica").textContent = "";
     $("nt-data").value = String(n.note_date).slice(0,10);
     setTecs(n.techniques); $("nt-texto").value = n.content; $("ntErro").textContent = "";
     $("btnSalvarNota").textContent = "Salvar alterações";
@@ -883,6 +894,7 @@
     ctx.textContent = "A nota original de " + fmtData(n.note_date) + " permanece no registro. Esta retificação será gravada como nova nota vinculada a ela.";
     $("nt-tipo").value = "evolucao"; $("nt-tipo").disabled = true;
     $("nt-sessao").value = n.session_number || "";
+    $("ntSessaoDica").textContent = "";
     $("nt-data").value = new Date().toISOString().slice(0,10);
     setTecs([]); $("nt-texto").value = ""; $("ntErro").textContent = "";
     $("btnSalvarNota").textContent = "Registrar retificação";
@@ -896,6 +908,10 @@
     var texto = $("nt-texto").value.trim();
     var err = $("ntErro"); err.textContent = "";
     if(texto.length < 10){ err.textContent = "Escreva a evolução antes de registrar."; return; }
+    var sessaoInf = parseInt($("nt-sessao").value);
+    if(modoForm.acao !== "retif" && $("nt-tipo").value === "evolucao" && !(sessaoInf >= 1)){
+      err.textContent = "Informe o número da sessão."; $("nt-sessao").focus(); return;
+    }
     var tecs = getTecs();
     this.disabled = true;
 
