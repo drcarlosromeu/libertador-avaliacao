@@ -67,6 +67,18 @@
   .icone-ok{font-size:64px; margin:30px 0 10px}
   .alerta-equipe{background:#FBEFEA; border:1.5px solid #B0603F; border-radius:12px; padding:14px 16px; font-size:16px; margin-top:16px; text-align:left}
   .fila{font-size:14px; color:#5E6B66; margin-top:18px}
+  .apoio{background:rgba(140,165,126,.16); border-left:4px solid var(--sage-dark); border-radius:0 12px 12px 0; padding:14px 16px; font-size:17px; margin-top:18px; text-align:left}
+  .falha-envio{background:#FBEFEA; border-left:4px solid #B0603F; border-radius:0 9px 9px 0; padding:12px 14px; font-size:16px; margin-top:16px; display:none}
+  @media (max-width:520px){
+    body{font-size:18px}
+    .tela{padding:20px 16px 80px}
+    h1{font-size:26px}
+    .pergunta{font-size:20px; min-height:0}
+    .op{font-size:17px; padding:14px 15px}
+    .opcoes.numerica .op{flex:1 1 calc(16.6% - 10px); font-size:19px; padding:13px 2px}
+    .btn{font-size:18px; padding:15px}
+    .grade-2{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
@@ -157,6 +169,7 @@
     <button class="btn secundario" id="btnVoltar">Voltar</button>
     <button class="btn" id="btnProxima" disabled>Próxima</button>
   </div>
+  <p class="falha-envio" id="falhaEnvio">Não consegui enviar esta parte (sem internet?). Suas respostas estão guardadas. Toque em "Concluir esta parte" de novo para tentar.</p>
 </section>
 
 <!-- ===== TELA FINAL ===== -->
@@ -166,8 +179,22 @@
     <h1 style="display:inline-block">Tudo certo!</h1>
     <p class="sub" style="margin-top:14px">Obrigado por responder. Pode devolver o tablet para a equipe.</p>
     <div class="alerta-equipe" id="alertaEquipe" style="display:none"></div>
+    <div class="apoio" id="apoioPaciente" style="display:none">
+      <b>Você não está sozinho(a).</b> Se em algum momento pensar em se machucar, ligue agora para o
+      <b>188</b> (CVV, 24 horas, gratuito) ou para o <b>192</b> (SAMU), ou vá a uma emergência.
+      Converse também com a equipe da clínica na sua próxima sessão, ou antes, pelo WhatsApp.
+    </div>
     <button class="btn" id="btnNova">Equipe: nova avaliação</button>
     <p class="fila" id="fimStatus"></p>
+  </div>
+</section>
+
+<!-- ===== LINK: carregando / indisponível ===== -->
+<section class="tela" id="tela-link">
+  <div class="cartao centro">
+    <h1 style="display:inline-block" id="linkTitulo">Abrindo seu questionário</h1>
+    <p class="sub" style="margin-top:14px" id="linkTexto">Só um instante.</p>
+    <button class="btn" id="btnLinkTentar" style="display:none">Tentar de novo</button>
   </div>
 </section>
 
@@ -373,9 +400,23 @@
       p_subscores: res.subscores || null,
       p_duration_seconds: Math.round((Date.now() - inicioInstr)/1000)
     };
-    var r = await rpc("kiosk_save_response", Object.assign({p_passcode:visita.passcode}, args));
-    if(!r.ok){
-      enfileirar({ tipo:"resposta", offlineId: visita.offlineId, args: args });
+    if(visita.link){
+      // link do paciente: sem fila no aparelho; só avança depois de gravar
+      delete args.p_visit_id;
+      this.disabled = true;
+      var rl = await rpc("link_save_response", Object.assign({p_token:visita.link}, args));
+      this.disabled = false;
+      if(!rl.ok){
+        if(rl.erro && rl.erro.indexOf("link indisponivel") >= 0){ return linkIndisponivel("expirado"); }
+        $("falhaEnvio").style.display = "block";
+        return;
+      }
+      $("falhaEnvio").style.display = "none";
+    } else {
+      var r = await rpc("kiosk_save_response", Object.assign({p_passcode:visita.passcode}, args));
+      if(!r.ok){
+        enfileirar({ tipo:"resposta", offlineId: visita.offlineId, args: args });
+      }
     }
     iInstr++;
     abrirInstrumento();
@@ -390,6 +431,17 @@
   function finalizar(){
     $("barra").style.width = "100%";
     $("topoConta").textContent = "Concluído";
+    if(visita.link){
+      rpc("link_complete", { p_token: visita.link });
+      document.querySelector("#tela-fim .sub").textContent =
+        "Obrigado por responder. Suas respostas já chegaram à equipe da clínica. Pode fechar esta página.";
+      $("btnNova").style.display = "none";
+      $("fimStatus").textContent = "";
+      $("alertaEquipe").style.display = "none";
+      $("apoioPaciente").style.display = alertas.length ? "block" : "none";
+      tela("tela-fim");
+      return;
+    }
     var pend = fila().length;
     $("fimStatus").textContent = pend ? (pend + " registro(s) guardados no aparelho, aguardando internet.") : "Todas as respostas foram enviadas.";
     if(alertas.length){
@@ -410,6 +462,47 @@
     mostrarFila();
     tela("tela-equipe");
   });
+
+  /* ===== modo link (paciente responde pelo próprio celular) ===== */
+  function linkIndisponivel(status){
+    var txt = {
+      expirado: ["Este link expirou", "Os links de questionário valem por 3 dias. Peça um novo à equipe da clínica pelo WhatsApp."],
+      concluido: ["Questionário já respondido", "Recebemos suas respostas. Obrigado! Pode fechar esta página."],
+      invalido: ["Link não encontrado", "Confira se o link foi copiado inteiro, ou peça um novo à equipe da clínica pelo WhatsApp."],
+      rede: ["Sem conexão", "Não consegui abrir o questionário. Verifique a internet e tente de novo."]
+    }[status] || ["Link indisponível", "Peça um novo link à equipe da clínica."];
+    $("topoFixo").style.display = "none";
+    $("linkTitulo").textContent = txt[0];
+    $("linkTexto").textContent = txt[1];
+    $("btnLinkTentar").style.display = status === "rede" ? "block" : "none";
+    tela("tela-link");
+  }
+  async function abrirLink(token){
+    tela("tela-link");
+    var r = await rpc("link_info", { p_token: token });
+    if(!r.ok) return linkIndisponivel(r.offline ? "rede" : "invalido");
+    var info = r.data || {};
+    if(info.status !== "ok") return linkIndisponivel(info.status);
+    var feitos = info.feitos || [];
+    sequencia = INSTRUMENTOS.filter(function(x){
+      return !x.pendente && x.visitas.indexOf(info.visit_type) >= 0 && feitos.indexOf(x.id) < 0;
+    });
+    visita = { link: token, tipo: info.visit_type };
+    alertas = []; iInstr = 0;
+    $("topoFixo").style.display = "flex";
+    if(!sequencia.length){ return finalizar(); }
+    atualizarTopo();
+    if(feitos.length){
+      document.querySelector("#tela-entrega h1").textContent = "Vamos continuar";
+      document.querySelector("#tela-entrega .sub").textContent =
+        "Você já respondeu uma parte. Faltam " + sequencia.length + ". Pode seguir no seu tempo.";
+    }
+    tela("tela-entrega");
+  }
+  $("btnLinkTentar").addEventListener("click", function(){ abrirLink(tokenLink); });
+
+  var tokenLink = new URLSearchParams(location.search).get("q");
+  if(tokenLink) abrirLink(tokenLink);
 })();
 </script>
 </body>

@@ -89,7 +89,7 @@
   .acao-nota:hover{border-color:var(--sage-dark)}
   .acao-nota .prazo{font-weight:400; color:var(--ink-3)}
 
-  .form-nota .linha{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px}
+  .form-nota .linha{display:grid; grid-template-columns:1.5fr .7fr 1.3fr; gap:12px}
   .checks{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px}
   .checks label{display:flex; align-items:center; gap:6px; font-size:13px; text-transform:none; letter-spacing:0; margin:0; font-weight:500; color:var(--ink);
     background:var(--off); border:1px solid var(--rule); border-radius:8px; padding:7px 10px; cursor:pointer}
@@ -101,7 +101,20 @@
   @media (max-width:860px){ .duas-colunas{grid-template-columns:1fr} .form-nota .linha{grid-template-columns:1fr} }
   .volta{background:none; border:0; color:var(--sage-dark); font-family:var(--sans); font-size:14px; font-weight:700; cursor:pointer; padding:0; margin-bottom:14px}
   .alerta-linha{background:var(--serio-bg); border:1px solid rgba(176,96,63,.4); color:var(--serio); border-radius:10px; padding:10px 14px; font-size:14px; margin:10px 0}
-  .botoes-form{display:flex; gap:10px; margin-top:14px}
+  .botoes-form{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap}
+  .botoes-cab{display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 4px}
+  .botoes-cab .btn{font-size:14px; padding:9px 15px}
+  .form-cad .linha{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px}
+  @media (max-width:860px){ .form-cad .linha{grid-template-columns:1fr} }
+  #caixaAplicar{display:none; margin-top:12px}
+  #caixaAplicar .linha{display:grid; grid-template-columns:1.4fr .8fr; gap:12px}
+  .instr-lista{font-size:13.5px; color:var(--ink-2); margin-top:10px}
+  #pcLinks{margin-top:12px}
+  .link-linha{display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:13.5px; background:var(--white); border:1px solid var(--rule); border-radius:10px; padding:9px 14px; margin-bottom:6px}
+  .link-linha .quando{color:var(--ink-2)}
+  .link-linha .acao-nota{margin-left:auto}
+  .pill.espera{background:#EFE7D3; color:#7A6224}
+  .pill.morto{background:#ECEAE6; color:var(--ink-3)}
 </style>
 </head>
 <body>
@@ -191,6 +204,7 @@
   <p class="sub">Toque num paciente para abrir a evolução e as notas.</p>
   <div class="busca">
     <input id="busca" type="text" placeholder="Buscar por código, nome ou iniciais">
+    <button class="btn" id="btnNovoPaciente">+ Novo paciente</button>
   </div>
   <table class="lista">
     <thead><tr>
@@ -207,10 +221,47 @@
     <h1 id="pcNome"></h1>
     <span class="cod" id="pcMeta"></span>
   </div>
+  <div class="botoes-cab">
+    <button class="btn" id="btnAplicar">Gerar link do questionário</button>
+    <button class="btn suave" id="btnEditarCad">Editar dados do paciente</button>
+  </div>
+  <div class="cartao" id="caixaAplicar">
+    <div id="apEscolha">
+      <div class="linha">
+        <div>
+          <label for="ap-visita">Momento da avaliação</label>
+          <select id="ap-visita"></select>
+        </div>
+        <div>
+          <label for="ap-sessao">Nº da sessão</label>
+          <input id="ap-sessao" type="number" min="1" max="99">
+        </div>
+      </div>
+      <p class="instr-lista" id="apInstr"></p>
+      <p class="erro" id="apErro"></p>
+      <div class="botoes-form">
+        <button class="btn" id="btnGerarLink">Gerar link</button>
+        <button class="btn suave" id="btnFecharAplicar">Cancelar</button>
+      </div>
+    </div>
+    <div id="apPronto" style="display:none">
+      <label>Link gerado · vale por 3 dias</label>
+      <input id="ap-link" type="text" readonly>
+      <label for="ap-msg">Mensagem para o paciente</label>
+      <textarea id="ap-msg" style="min-height:110px"></textarea>
+      <div class="botoes-form">
+        <button class="btn" id="btnWhats">Enviar pelo WhatsApp</button>
+        <button class="btn suave" id="btnCopiar">Copiar mensagem</button>
+        <button class="btn suave" id="btnAbrirAqui">Responder neste aparelho</button>
+      </div>
+      <p class="aviso" id="apAviso"></p>
+    </div>
+  </div>
+  <div id="pcLinks"></div>
   <div id="pcAlertas"></div>
 
   <h2>Evolução dos escores</h2>
-  <p class="sub" style="margin-bottom:4px">Cada gráfico na escala completa do instrumento. Em todos, valor menor é melhor.</p>
+  <p class="sub" style="margin-bottom:4px">Cada gráfico na escala completa do instrumento. Dor, interferência, PHQ-9 e CSI: menor é melhor. Qualidade de vida (WHOQOL, 0 a 100): maior é melhor.</p>
   <div class="grade-graficos" id="graficos"></div>
 
   <div class="duas-colunas" style="margin-top:26px">
@@ -258,9 +309,43 @@
   </div>
 </section>
 
+<!-- ===== CADASTRO DO PACIENTE ===== -->
+<section class="tela" id="tela-cadastro">
+  <button class="volta" id="btnVoltaCad">&#8592; Voltar</button>
+  <h1 id="tituloCad">Novo paciente</h1>
+  <p class="sub">O nome fica visível só para a equipe logada. O tablet e o banco de pesquisa usam apenas o código.</p>
+  <div class="cartao form-cad" style="max-width:640px">
+    <label for="cd-nome">Nome completo</label>
+    <input id="cd-nome" type="text" autocomplete="off">
+    <div class="linha">
+      <div>
+        <label for="cd-codigo">Código (nº do prontuário)</label>
+        <input id="cd-codigo" type="text" autocomplete="off">
+      </div>
+      <div>
+        <label for="cd-ano">Ano de nascimento</label>
+        <input id="cd-ano" type="number" min="1900" max="2030" inputmode="numeric">
+      </div>
+      <div>
+        <label for="cd-sexo">Sexo</label>
+        <select id="cd-sexo">
+          <option value="F">Feminino</option>
+          <option value="M">Masculino</option>
+          <option value="O">Outro / não informar</option>
+        </select>
+      </div>
+    </div>
+    <p class="erro" id="cdErro"></p>
+    <div class="botoes-form">
+      <button class="btn" id="btnSalvarCad">Salvar paciente</button>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js" integrity="sha384-yiVMs0R/Jyz7OhoXa/DsEMUSBLjEhr/QJta2ONO+zB6I8/GmNg/7AUFrZmAJV7KV" crossorigin="anonymous"></script>
+<script src="../instrumentos.js"></script>
 <script>
 (function(){
   /* ===== CONFIGURAÇÃO (preencher ao implantar) ===== */
@@ -273,17 +358,29 @@
     ["educacao","Educação em dor"], ["rastreio","Rastreio somático"],
     ["escrita","Escrita expressiva"], ["emocional","Expressão emocional"],
     ["emdr","EMDR"], ["limites","Limites/autocuidado"],
-    ["movimento","Movimento"], ["farmaco","Ajuste farmacológico"]
+    ["movimento","Movimento"], ["farmaco","Ajuste farmacológico"],
+    ["exposicao","Exposição gradual"], ["exercicio","Exercício terapêutico"],
+    ["consciencia","Consciência corporal"], ["respiracao","Respiração/relaxamento"]
   ];
+  // src = instrumento; sub = subescala (WHOQOL); maior = maior é melhor
   var INSTR = {
     end:   { nome:"Dor (média 7d)", max:10 },
     int:   { nome:"Interferência",  max:10 },
     phq9:  { nome:"PHQ-9",          max:27 },
     csi:   { nome:"BR-CSI",         max:100 },
     pcs:   { nome:"Catastrofização",max:52 },
-    tsk11: { nome:"Cinesiofobia",   max:44, min:11 }
+    tsk11: { nome:"Cinesiofobia",   max:44, min:11 },
+    wq_fis:{ nome:"QV · Físico",       max:100, src:"whoqol", sub:"fisico", maior:true },
+    wq_psi:{ nome:"QV · Psicológico",  max:100, src:"whoqol", sub:"psicologico", maior:true },
+    wq_rel:{ nome:"QV · Relações",     max:100, src:"whoqol", sub:"relacoes", maior:true },
+    wq_amb:{ nome:"QV · Ambiente",     max:100, src:"whoqol", sub:"ambiente", maior:true }
   };
   var VISITA_NOME = { inicial:"Inicial", sessao4:"4ª sessão", sessao8:"8ª sessão", alta:"Alta", seguimento4m:"4 meses", extra:"Extra" };
+  // VISITAS e INSTRUMENTOS vêm de ../instrumentos.js, o mesmo arquivo do tablet
+  function bateria(tipo){
+    return INSTRUMENTOS.filter(function(x){ return !x.pendente && x.visitas.indexOf(tipo) >= 0; })
+      .map(function(x){ return x.nome; });
+  }
   var KIND_NOME = { evolucao:"Evolução", avaliacao_inicial:"Avaliação inicial", contato:"Contato", alta:"Alta", retificacao:"Retificação", outro:"Nota" };
 
   var demo = /[?&]demo=1/.test(location.search);
@@ -322,7 +419,9 @@
         phq9: [["v0",14,{faixa:"moderado",item9:0}],["v3",4,{faixa:"mínimo",item9:0}]],
         csi:  [["v0",58,{corte40:true}],["v3",31,{corte40:false}]],
         pcs:  [["v0",32],["v3",12]],
-        tsk11:[["v0",34],["v3",19]]
+        tsk11:[["v0",34],["v3",19]],
+        whoqol:[["v0",null,{fisico:32.1,psicologico:41.7,relacoes:50,ambiente:53.1}],
+                ["v3",null,{fisico:67.9,psicologico:66.7,relacoes:66.7,ambiente:59.4}]]
       },
       notes: [
         { id:"n1", kind:"evolucao", note_date: new Date(agora-2*3600000).toISOString().slice(0,10), session_number:13,
@@ -367,6 +466,17 @@
     var r1 = await sb.schema("clinic").from("patients").select("id, code, full_name, initials, birth_year, sex").order("code");
     if(r1.error){ alert("Erro ao carregar pacientes: "+r1.error.message); return; }
     pacientes = r1.data.map(function(p){ p.visits=[]; p.responses={}; p.notes=[]; return p; });
+    // resumo para a lista: última visita, dor e alerta do PHQ-9
+    var porId = {}; pacientes.forEach(function(p){ porId[p.id] = p; });
+    var rv = await sb.schema("clinic").from("visits").select("id, patient_id, visit_type, visit_date, session_number").order("visit_date");
+    var visPac = {};
+    (rv.data||[]).forEach(function(v){ var p = porId[v.patient_id]; if(p){ p.visits.push(v); visPac[v.id] = p; } });
+    var rr = await sb.schema("clinic").from("responses").select("visit_id, instrument, score, subscores").in("instrument", ["end","phq9"]);
+    var ordem = {}; (rv.data||[]).forEach(function(v,i){ ordem[v.id] = i; });
+    (rr.data||[]).sort(function(a,b){ return (ordem[a.visit_id]||0)-(ordem[b.visit_id]||0); }).forEach(function(r){
+      var p = visPac[r.visit_id]; if(!p) return;
+      (p.responses[r.instrument] = p.responses[r.instrument] || []).push([r.visit_id, r.score, r.subscores]);
+    });
     renderLista();
   }
   async function carregarFicha(p){
@@ -388,6 +498,10 @@
       p.responses[k].sort(function(a,b){ return (ordem[a[0]]||0)-(ordem[b[0]]||0); });
     });
     p.notes = (nt.data||[]).map(function(n){ n.author_name = n.staff ? n.staff.full_name : "?"; return n; });
+    var lk = await sb.schema("clinic").from("visit_links")
+      .select("token, visit_type, session_number, created_at, expires_at, completed_at, revoked, visit_id")
+      .eq("patient_id", p.id).order("created_at", {ascending:false});
+    p.links = lk.data || [];
     return p;
   }
 
@@ -422,7 +536,8 @@
     $("pcNome").textContent = atual.full_name || atual.initials || ("Paciente "+atual.code);
     var idade = atual.birth_year ? (new Date().getFullYear() - atual.birth_year) + " anos" : "";
     $("pcMeta").textContent = "Prontuário "+atual.code + (idade ? " · "+idade : "") + (atual.sex ? " · "+atual.sex : "");
-    renderAlertas(); renderGraficos(); renderNotas();
+    renderAlertas(); renderGraficos(); renderNotas(); renderLinks();
+    $("caixaAplicar").style.display = "none";
     formNova();
     tela("tela-paciente");
   }
@@ -441,7 +556,9 @@
     var grade = $("graficos"); grade.innerHTML = "";
     Object.keys(INSTR).forEach(function(k){
       var cfg = INSTR[k];
-      var serie = (atual.responses[k]||[]).map(function(r){ return r[1]; }).filter(function(v){ return v!=null; });
+      var serie = (atual.responses[cfg.src || k]||[]).map(function(r){
+        return cfg.sub ? (r[2] ? r[2][cfg.sub] : null) : r[1];
+      }).filter(function(v){ return v!=null; });
       var card = document.createElement("div"); card.className = "g-card";
       if(!serie.length){
         card.innerHTML = '<div class="t">'+esc(cfg.nome)+'</div><div class="g-vazio">Sem aplicações ainda</div>';
@@ -449,7 +566,8 @@
       }
       var atualV = serie[serie.length-1], primeiro = serie[0];
       var delta = Math.round((atualV - primeiro)*10)/10;
-      var deltaTxt = serie.length>1 ? '<span class="delta'+(delta<0?' melhor':'')+'">'+(delta>0?'+':'')+delta+' desde a inicial</span>' : '';
+      var melhorou = cfg.maior ? delta > 0 : delta < 0;
+      var deltaTxt = serie.length>1 ? '<span class="delta'+(melhorou?' melhor':'')+'">'+(delta>0?'+':'')+delta+' desde a inicial</span>' : '';
       var min = cfg.min || 0, max = cfg.max;
       var W=210, H=52, PAD=6;
       var xs = serie.map(function(_,i){ return serie.length===1 ? W/2 : PAD + i*(W-2*PAD)/(serie.length-1); });
@@ -468,6 +586,200 @@
           circulos+
         '</svg>';
       grade.appendChild(card);
+    });
+  }
+
+  /* ===== cadastro do paciente ===== */
+  var modoCad = { acao:"novo" };
+  function iniciaisDe(nome){
+    var fora = ["de","da","do","das","dos","e"];
+    return (nome||"").trim().split(/\s+/).filter(function(w){ return w && fora.indexOf(w.toLowerCase()) < 0; })
+      .map(function(w){ return w.charAt(0).toUpperCase(); }).join("").slice(0,6) || null;
+  }
+  function abrirCadastro(p){
+    modoCad = p ? { acao:"editar", p:p } : { acao:"novo" };
+    $("tituloCad").textContent = p ? "Editar dados do paciente" : "Novo paciente";
+    $("btnSalvarCad").textContent = p ? "Salvar alterações" : "Salvar paciente";
+    $("cd-nome").value = p ? (p.full_name||"") : "";
+    $("cd-codigo").value = p ? (p.code||"") : "";
+    $("cd-ano").value = p && p.birth_year ? p.birth_year : "";
+    $("cd-sexo").value = p && p.sex ? p.sex : "F";
+    $("cdErro").textContent = "";
+    tela("tela-cadastro");
+    $("cd-nome").focus();
+  }
+  $("btnNovoPaciente").addEventListener("click", function(){ abrirCadastro(null); });
+  $("btnEditarCad").addEventListener("click", function(){ abrirCadastro(atual); });
+  $("btnVoltaCad").addEventListener("click", function(){
+    if(modoCad.acao === "editar") tela("tela-paciente"); else { renderLista(); tela("tela-lista"); }
+  });
+  $("btnSalvarCad").addEventListener("click", async function(){
+    var err = $("cdErro"); err.textContent = "";
+    var nome = $("cd-nome").value.trim().replace(/\s+/g, " ");
+    var codigo = $("cd-codigo").value.trim();
+    var ano = parseInt($("cd-ano").value) || null;
+    if(nome.length < 3){ err.textContent = "Informe o nome do paciente."; return; }
+    if(!codigo){ err.textContent = "Informe o código (número do prontuário)."; return; }
+    if(ano && (ano < 1900 || ano > new Date().getFullYear())){ err.textContent = "Ano de nascimento inválido."; return; }
+    var dados = { full_name:nome, code:codigo, initials:iniciaisDe(nome), birth_year:ano, sex:$("cd-sexo").value };
+    var repetido = pacientes.filter(function(x){ return x.code === codigo && (modoCad.acao === "novo" || x.id !== modoCad.p.id); })[0];
+    if(repetido){ err.textContent = "Já existe paciente com o código "+codigo+" ("+(repetido.full_name||repetido.initials||"sem nome")+")."; return; }
+    this.disabled = true;
+    var p;
+    if(demo){
+      if(modoCad.acao === "editar"){ p = Object.assign(modoCad.p, dados); }
+      else { p = Object.assign({ id:"d"+Date.now(), visits:[], responses:{}, notes:[] }, dados); pacientes.push(p); }
+    } else if(modoCad.acao === "editar"){
+      var r = await sb.schema("clinic").from("patients").update(dados).eq("id", modoCad.p.id);
+      if(r.error){ err.textContent = msgBanco(r.error); this.disabled = false; return; }
+      p = Object.assign(modoCad.p, dados);
+    } else {
+      var r2 = await sb.schema("clinic").from("patients").insert(dados).select("id, code, full_name, initials, birth_year, sex").single();
+      if(r2.error){ err.textContent = msgBanco(r2.error); this.disabled = false; return; }
+      p = Object.assign(r2.data, { visits:[], responses:{}, notes:[] });
+      pacientes.push(p);
+      pacientes.sort(function(a,b){ return String(a.code).localeCompare(String(b.code), "pt-BR", {numeric:true}); });
+    }
+    this.disabled = false;
+    await abrirPaciente(p);
+  });
+  function msgBanco(e){
+    var m = (e && e.message) || "";
+    if(e && e.code === "23505") return "Já existe paciente com este código.";
+    if(/permission denied|row-level security/i.test(m)) return "Sem permissão para gravar. Avise o Dr. Carlos (falta liberar o cadastro no banco).";
+    return "Erro ao salvar: " + m;
+  }
+
+  /* ===== aplicar questionário no tablet ===== */
+  Object.keys(VISITAS).forEach(function(k){
+    var o = document.createElement("option"); o.value = k; o.textContent = VISITAS[k].nome;
+    $("ap-visita").appendChild(o);
+  });
+  function sugerirVisita(){
+    var feitas = (atual.visits||[]).map(function(v){ return v.visit_type; });
+    var ordem = ["inicial","sessao4","sessao8","alta","seguimento4m"];
+    for(var i=0;i<ordem.length;i++){ if(feitas.indexOf(ordem[i]) < 0) return ordem[i]; }
+    return "extra";
+  }
+  function atualizarAplicar(){
+    var tipo = $("ap-visita").value;
+    $("ap-sessao").value = tipo === "sessao4" ? 4 : tipo === "sessao8" ? 8 : "";
+    var lista = bateria(tipo);
+    var jaFeita = (atual.visits||[]).some(function(v){ return v.visit_type === tipo; }) && tipo !== "extra";
+    $("apInstr").innerHTML = "<b>Questionários:</b> " + esc(lista.join(" · ")) +
+      (jaFeita ? '<br><span style="color:var(--serio)">Este paciente já tem uma avaliação deste tipo. Confira se não é outro momento.</span>' : "");
+  }
+  $("ap-visita").addEventListener("change", atualizarAplicar);
+  $("btnAplicar").addEventListener("click", function(){
+    $("ap-visita").value = sugerirVisita();
+    atualizarAplicar();
+    $("apErro").textContent = "";
+    $("apEscolha").style.display = "block";
+    $("apPronto").style.display = "none";
+    $("caixaAplicar").style.display = "block";
+  });
+  $("btnFecharAplicar").addEventListener("click", function(){ $("caixaAplicar").style.display = "none"; });
+
+  var NA_MENSAGEM = { inicial:"avaliação inicial", sessao4:"reavaliação da 4ª sessão", sessao8:"reavaliação da 8ª sessão",
+    alta:"avaliação de alta", seguimento4m:"avaliação de seguimento (4 meses)", extra:"avaliação" };
+  function urlDoLink(token){
+    return location.origin + location.pathname.replace(/equipe\/(index\.html)?$/, "") + "?q=" + token;
+  }
+  function primeiroNome(p){
+    var n = (p.full_name||"").trim().split(/\s+/)[0] || "";
+    return n ? n.charAt(0).toUpperCase() + n.slice(1).toLowerCase() : "";
+  }
+  var MIN_POR_INSTR = { end:1, int:2, phq9:3, csi:5, pcs:3, tsk11:3, whoqol:6 };
+  function minutos(tipo){
+    var t = INSTRUMENTOS.filter(function(x){ return !x.pendente && x.visitas.indexOf(tipo) >= 0; })
+      .reduce(function(a, x){ return a + (MIN_POR_INSTR[x.id] || 3); }, 0);
+    return Math.max(5, Math.ceil(t/5)*5) + " minutos";
+  }
+  function mostrarLinkPronto(token, tipo){
+    var url = urlDoLink(token);
+    var nome = primeiroNome(atual);
+    $("ap-link").value = url;
+    $("ap-msg").value =
+      "Olá" + (nome ? ", " + nome : "") + "! Aqui é a equipe da Clínica Neuroliv.\n\n" +
+      "Este é o questionário da sua " + (NA_MENSAGEM[tipo] || "avaliação") + " no programa LibertaDor. " +
+      "Leva cerca de " + minutos(tipo) + " e pode ser respondido pelo celular:\n" + url + "\n\n" +
+      "O link vale por 3 dias. Qualquer dúvida, é só responder por aqui.";
+    $("apAviso").style.display = "none";
+    $("apEscolha").style.display = "none";
+    $("apPronto").style.display = "block";
+  }
+  $("btnGerarLink").addEventListener("click", async function(){
+    var err = $("apErro"); err.textContent = "";
+    var tipo = $("ap-visita").value;
+    var sessao = parseInt($("ap-sessao").value) || null;
+    if(demo){
+      var falso = "demo" + Math.random().toString(16).slice(2, 14);
+      atual.links = atual.links || [];
+      atual.links.unshift({ token:falso, visit_type:tipo, session_number:sessao, created_at:new Date().toISOString(),
+        expires_at:new Date(Date.now()+72*3600000).toISOString(), completed_at:null, revoked:false, visit_id:null });
+      renderLinks(); mostrarLinkPronto(falso, tipo); return;
+    }
+    this.disabled = true;
+    var r = await sb.schema("clinic").from("visit_links")
+      .insert({ patient_id: atual.id, visit_type: tipo, session_number: sessao, created_by: eu.id })
+      .select("token").single();
+    this.disabled = false;
+    if(r.error){ err.textContent = msgBanco(r.error); return; }
+    await carregarFicha(atual);
+    renderLinks();
+    mostrarLinkPronto(r.data.token, tipo);
+  });
+  $("btnWhats").addEventListener("click", function(){
+    // sem telefone no sistema: o WhatsApp abre e a equipe escolhe o contato
+    window.open("https://wa.me/?text=" + encodeURIComponent($("ap-msg").value), "_blank", "noopener");
+  });
+  $("btnCopiar").addEventListener("click", async function(){
+    var av = $("apAviso");
+    try{ await navigator.clipboard.writeText($("ap-msg").value); av.textContent = "Mensagem copiada. Cole na conversa do paciente."; }
+    catch(e){ $("ap-msg").select(); av.textContent = "Selecionei a mensagem: use Ctrl+C (ou Copiar) para copiar."; }
+    av.style.display = "block";
+  });
+  $("btnAbrirAqui").addEventListener("click", function(){ window.open($("ap-link").value, "_blank", "noopener"); });
+
+  /* ===== links enviados ===== */
+  function situacaoLink(l){
+    if(l.revoked) return '<span class="pill morto">Cancelado</span>';
+    if(l.completed_at) return '<span class="pill ok">Respondido '+esc(fmtData(l.completed_at))+'</span>';
+    if(new Date(l.expires_at).getTime() < Date.now()) return '<span class="pill morto">Expirado sem resposta</span>';
+    if(l.visit_id) return '<span class="pill espera">Respondendo (parcial)</span>';
+    return '<span class="pill espera">Aguardando o paciente</span>';
+  }
+  function renderLinks(){
+    var box = $("pcLinks"); box.innerHTML = "";
+    var lista = (atual.links||[]).slice(0, 6);
+    if(!lista.length) return;
+    box.insertAdjacentHTML("beforeend", '<label style="margin-top:4px">Questionários enviados</label>');
+    lista.forEach(function(l){
+      var aberto = !l.revoked && !l.completed_at && new Date(l.expires_at).getTime() > Date.now();
+      var d = document.createElement("div"); d.className = "link-linha";
+      d.innerHTML = '<b>'+esc(VISITAS[l.visit_type] ? VISITAS[l.visit_type].nome : l.visit_type)+'</b>'+
+        '<span class="quando">gerado em '+esc(fmtData(l.created_at))+'</span>'+situacaoLink(l)+
+        (aberto ? '<button class="acao-nota" data-reenviar="'+esc(l.token)+'">Reenviar</button>'+
+                  '<button class="acao-nota" data-cancelar="'+esc(l.token)+'">Cancelar link</button>' : '');
+      box.appendChild(d);
+    });
+    box.querySelectorAll("[data-reenviar]").forEach(function(b){
+      b.addEventListener("click", function(){
+        var l = atual.links.filter(function(x){ return x.token === b.getAttribute("data-reenviar"); })[0];
+        $("caixaAplicar").style.display = "block";
+        mostrarLinkPronto(l.token, l.visit_type);
+      });
+    });
+    box.querySelectorAll("[data-cancelar]").forEach(function(b){
+      b.addEventListener("click", async function(){
+        var tok = b.getAttribute("data-cancelar");
+        if(!demo){
+          var r = await sb.schema("clinic").from("visit_links").update({ revoked:true }).eq("token", tok);
+          if(r.error){ b.textContent = "Erro"; return; }
+        }
+        atual.links.forEach(function(x){ if(x.token === tok) x.revoked = true; });
+        renderLinks();
+      });
     });
   }
 
