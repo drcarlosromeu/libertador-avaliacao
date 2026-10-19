@@ -153,7 +153,10 @@
   <div class="cartao">
     <h1 id="introNome"></h1>
     <p class="sub" id="introTexto"></p>
-    <button class="btn" id="btnIntroOk">Vamos lá</button>
+    <div class="nav-inferior">
+      <button class="btn secundario" id="btnIntroVoltar">Voltar</button>
+      <button class="btn" id="btnIntroOk">Vamos lá</button>
+    </div>
   </div>
 </section>
 
@@ -211,6 +214,7 @@
   var sequencia = [];     // instrumentos da visita
   var iInstr = 0, iItem = 0;
   var respostas = [];     // respostas do instrumento atual
+  var guardadas = {};     // respostas já concluídas, por parte (para o Voltar)
   var inicioInstr = 0;
   var alertas = [];
 
@@ -318,7 +322,7 @@
     if(!visitId) enfileirar({ tipo:"visita", offlineId:offlineId, args:args });
 
     visita = { visitId: visitId, passcode: senha, offlineId: offlineId, tipo: tipo };
-    alertas = [];
+    alertas = []; guardadas = {};
     iInstr = 0;
     drenarFila(senha); // aproveita a conexão para drenar pendências antigas
     $("topoFixo").style.display = "flex";
@@ -338,7 +342,7 @@
   function abrirInstrumento(){
     if(iInstr >= sequencia.length){ return finalizar(); }
     var ins = sequencia[iInstr];
-    respostas = new Array(ins.itens.length).fill(null);
+    respostas = guardadas[iInstr] ? guardadas[iInstr].slice() : new Array(ins.itens.length).fill(null);
     iItem = 0; inicioInstr = Date.now();
     atualizarTopo();
     $("introNome").textContent = ins.nome;
@@ -346,6 +350,18 @@
     tela("tela-intro");
   }
   $("btnIntroOk").addEventListener("click", function(){ mostrarItem(); });
+  // Voltar na abertura: última pergunta da parte anterior (ou a tela inicial)
+  $("btnIntroVoltar").addEventListener("click", function(){
+    if(iInstr === 0){ tela("tela-entrega"); return; }
+    iInstr--;
+    var ins = sequencia[iInstr];
+    respostas = guardadas[iInstr] ? guardadas[iInstr].slice() : new Array(ins.itens.length).fill(null);
+    iItem = ins.itens.length - 1; inicioInstr = Date.now();
+    atualizarTopo();
+    $("introNome").textContent = ins.nome;
+    $("introTexto").textContent = ins.instrucao;
+    mostrarItem();
+  });
 
   function mostrarItem(){
     var ins = sequencia[iInstr];
@@ -378,17 +394,21 @@
     });
     $("btnProxima").disabled = (respostas[iItem] === null);
     $("btnProxima").textContent = (iItem === ins.itens.length-1) ? "Concluir esta parte" : "Próxima";
-    $("btnVoltar").style.visibility = (iItem === 0) ? "hidden" : "visible";
+    $("btnVoltar").style.visibility = "visible";
     tela("tela-pergunta");
   }
 
-  $("btnVoltar").addEventListener("click", function(){ if(iItem>0){ iItem--; mostrarItem(); } });
+  $("btnVoltar").addEventListener("click", function(){
+    if(iItem > 0){ iItem--; mostrarItem(); }
+    else { tela("tela-intro"); }
+  });
   $("btnProxima").addEventListener("click", async function(){
     var ins = sequencia[iInstr];
     if(iItem < ins.itens.length - 1){ iItem++; mostrarItem(); return; }
 
     // fim do instrumento: calcula e grava
     var res = ins.escore(respostas.slice());
+    if(ins.id === "phq9"){ alertas = alertas.filter(function(a){ return a.indexOf("PHQ-9") !== 0; }); }
     if(ins.id === "phq9" && respostas[8] > 0){
       alertas.push("PHQ-9: item 9 positivo (valor " + respostas[8] + "). Conduta da equipe antes da saída do paciente.");
     }
@@ -418,6 +438,7 @@
         enfileirar({ tipo:"resposta", offlineId: visita.offlineId, args: args });
       }
     }
+    guardadas[iInstr] = respostas.slice();
     iInstr++;
     abrirInstrumento();
   });
@@ -488,7 +509,7 @@
       return !x.pendente && x.visitas.indexOf(info.visit_type) >= 0 && feitos.indexOf(x.id) < 0;
     });
     visita = { link: token, tipo: info.visit_type };
-    alertas = []; iInstr = 0;
+    alertas = []; guardadas = {}; iInstr = 0;
     $("topoFixo").style.display = "flex";
     if(!sequencia.length){ return finalizar(); }
     atualizarTopo();
