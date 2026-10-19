@@ -318,6 +318,8 @@
   <div class="cartao form-cad" style="max-width:640px">
     <label for="cd-nome">Nome completo</label>
     <input id="cd-nome" type="text" autocomplete="off">
+    <label for="cd-fone">WhatsApp do paciente (com DDD)</label>
+    <input id="cd-fone" type="tel" inputmode="tel" autocomplete="off" placeholder="(71) 99999-8888">
     <div class="linha">
       <div>
         <label for="cd-codigo">Código (nº do prontuário)</label>
@@ -464,7 +466,7 @@
   /* ===== dados: Supabase ===== */
   async function carregarPacientes(){
     if(demo){ pacientes = DEMO; renderLista(); return; }
-    var r1 = await sb.schema("clinic").from("patients").select("id, code, full_name, initials, birth_year, sex").order("code");
+    var r1 = await sb.schema("clinic").from("patients").select("id, code, full_name, initials, birth_year, sex, phone").order("code");
     if(r1.error){ alert("Erro ao carregar pacientes: "+r1.error.message); return; }
     pacientes = r1.data.map(function(p){ p.visits=[]; p.responses={}; p.notes=[]; return p; });
     // resumo para a lista: última visita, dor e alerta do PHQ-9
@@ -536,7 +538,7 @@
     atual = await carregarFicha(p);
     $("pcNome").textContent = atual.full_name || atual.initials || ("Paciente "+atual.code);
     var idade = atual.birth_year ? (new Date().getFullYear() - atual.birth_year) + " anos" : "";
-    $("pcMeta").textContent = "Prontuário "+atual.code + (idade ? " · "+idade : "") + (atual.sex ? " · "+atual.sex : "");
+    $("pcMeta").textContent = "Prontuário "+atual.code + (idade ? " · "+idade : "") + (atual.sex ? " · "+atual.sex : "") + (atual.phone ? " · WhatsApp "+foneBonito(atual.phone) : "");
     renderAlertas(); renderGraficos(); renderNotas(); renderLinks();
     $("caixaAplicar").style.display = "none";
     formNova();
@@ -592,6 +594,18 @@
 
   /* ===== cadastro do paciente ===== */
   var modoCad = { acao:"novo" };
+  function foneBonito(f){
+    var d = String(f||"").replace(/\D/g, "");
+    if(d.length > 11 && d.indexOf("55") === 0) d = d.slice(2);
+    if(d.length === 11) return "("+d.slice(0,2)+") "+d.slice(2,7)+"-"+d.slice(7);
+    if(d.length === 10) return "("+d.slice(0,2)+") "+d.slice(2,6)+"-"+d.slice(6);
+    return d;
+  }
+  function foneWhats(f){
+    var d = String(f||"").replace(/\D/g, "");
+    if(!d) return "";
+    return (d.length <= 11 ? "55" : "") + d;
+  }
   function iniciaisDe(nome){
     var fora = ["de","da","do","das","dos","e"];
     return (nome||"").trim().split(/\s+/).filter(function(w){ return w && fora.indexOf(w.toLowerCase()) < 0; })
@@ -602,6 +616,7 @@
     $("tituloCad").textContent = p ? "Editar dados do paciente" : "Novo paciente";
     $("btnSalvarCad").textContent = p ? "Salvar alterações" : "Salvar paciente";
     $("cd-nome").value = p ? (p.full_name||"") : "";
+    $("cd-fone").value = p && p.phone ? foneBonito(p.phone) : "";
     $("cd-codigo").value = p ? (p.code||"") : "";
     $("cd-ano").value = p && p.birth_year ? p.birth_year : "";
     $("cd-sexo").value = p && p.sex ? p.sex : "F";
@@ -622,7 +637,9 @@
     if(nome.length < 3){ err.textContent = "Informe o nome do paciente."; return; }
     if(!codigo){ err.textContent = "Informe o código (número do prontuário)."; return; }
     if(ano && (ano < 1900 || ano > new Date().getFullYear())){ err.textContent = "Ano de nascimento inválido."; return; }
-    var dados = { full_name:nome, code:codigo, initials:iniciaisDe(nome), birth_year:ano, sex:$("cd-sexo").value };
+    var fone = $("cd-fone").value.replace(/\D/g, "");
+    if(fone && !/^[0-9]{10,13}$/.test(fone)){ err.textContent = "WhatsApp inválido. Use o DDD e o número, ex.: (71) 99999-8888."; return; }
+    var dados = { full_name:nome, code:codigo, initials:iniciaisDe(nome), birth_year:ano, sex:$("cd-sexo").value, phone:fone || null };
     var repetido = pacientes.filter(function(x){ return x.code === codigo && (modoCad.acao === "novo" || x.id !== modoCad.p.id); })[0];
     if(repetido){ err.textContent = "Já existe paciente com o código "+codigo+" ("+(repetido.full_name||repetido.initials||"sem nome")+")."; return; }
     this.disabled = true;
@@ -635,7 +652,7 @@
       if(r.error){ err.textContent = msgBanco(r.error); this.disabled = false; return; }
       p = Object.assign(modoCad.p, dados);
     } else {
-      var r2 = await sb.schema("clinic").from("patients").insert(dados).select("id, code, full_name, initials, birth_year, sex").single();
+      var r2 = await sb.schema("clinic").from("patients").insert(dados).select("id, code, full_name, initials, birth_year, sex, phone").single();
       if(r2.error){ err.textContent = msgBanco(r2.error); this.disabled = false; return; }
       p = Object.assign(r2.data, { visits:[], responses:{}, notes:[] });
       pacientes.push(p);
@@ -705,6 +722,7 @@
       "Este é o questionário da sua " + (NA_MENSAGEM[tipo] || "avaliação") + " no programa LibertaDor. " +
       "Leva cerca de " + minutos(tipo) + " e pode ser respondido pelo celular:\n" + url + "\n\n" +
       "O link vale por 3 dias. Qualquer dúvida, é só responder por aqui.";
+    $("btnWhats").textContent = atual.phone ? "Enviar pelo WhatsApp para " + foneBonito(atual.phone) : "Enviar pelo WhatsApp";
     $("apAviso").style.display = "none";
     $("apEscolha").style.display = "none";
     $("apPronto").style.display = "block";
@@ -731,8 +749,9 @@
     mostrarLinkPronto(r.data.token, tipo);
   });
   $("btnWhats").addEventListener("click", function(){
-    // sem telefone no sistema: o WhatsApp abre e a equipe escolhe o contato
-    window.open("https://wa.me/?text=" + encodeURIComponent($("ap-msg").value), "_blank", "noopener");
+    // com telefone: abre a conversa do paciente com a mensagem pronta;
+    // sem telefone: o WhatsApp abre e a equipe escolhe o contato
+    window.open("https://wa.me/" + foneWhats(atual.phone) + "?text=" + encodeURIComponent($("ap-msg").value), "_blank", "noopener");
   });
   $("btnCopiar").addEventListener("click", async function(){
     var av = $("apAviso");
