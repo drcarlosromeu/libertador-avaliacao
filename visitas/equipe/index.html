@@ -328,6 +328,7 @@
       <div>
         <label for="cd-codigo">Código (nº do prontuário)</label>
         <input id="cd-codigo" type="text" autocomplete="off">
+        <p class="aviso" id="cdCodigoDica" style="margin-top:4px; display:none">Número gerado automaticamente. Pode alterar, se preferir.</p>
       </div>
       <div>
         <label for="cd-ano">Ano de nascimento</label>
@@ -623,6 +624,13 @@
     if(!d) return "";
     return (d.length <= 11 ? "55" : "") + d;
   }
+  // próximo número de prontuário: maior código numérico + 1 (começa em 1001)
+  function proximoCodigo(){
+    var maior = pacientes.reduce(function(m, x){
+      return /^\d+$/.test(String(x.code)) ? Math.max(m, parseInt(x.code, 10)) : m;
+    }, 1000);
+    return String(maior + 1);
+  }
   function iniciaisDe(nome){
     var fora = ["de","da","do","das","dos","e"];
     return (nome||"").trim().split(/\s+/).filter(function(w){ return w && fora.indexOf(w.toLowerCase()) < 0; })
@@ -634,7 +642,8 @@
     $("btnSalvarCad").textContent = p ? "Salvar alterações" : "Salvar paciente";
     $("cd-nome").value = p ? (p.full_name||"") : "";
     $("cd-fone").value = p && p.phone ? foneBonito(p.phone) : "";
-    $("cd-codigo").value = p ? (p.code||"") : "";
+    $("cd-codigo").value = p ? (p.code||"") : proximoCodigo();
+    $("cdCodigoDica").style.display = p ? "none" : "block";
     $("cd-ano").value = p && p.birth_year ? p.birth_year : "";
     $("cd-sexo").value = p && p.sex ? p.sex : "F";
     $("cdErro").textContent = "";
