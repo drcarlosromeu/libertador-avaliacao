@@ -144,6 +144,7 @@
     <p class="icone-ok">🙂</p>
     <h1 style="display:inline-block">Agora é com você</h1>
     <p class="sub" style="margin-top:14px">Vamos fazer algumas perguntas sobre como você está. Não existem respostas certas ou erradas, e você pode responder no seu tempo. Suas respostas ajudam a orientar o seu tratamento.</p>
+    <p class="sub" id="entregaTempo" style="display:none"></p>
     <button class="btn" id="btnPaciente">Começar</button>
   </div>
 </section>
@@ -327,11 +328,21 @@
     drenarFila(senha); // aproveita a conexão para drenar pendências antigas
     $("topoFixo").style.display = "flex";
     atualizarTopo();
+    textoTempo();
     tela("tela-entrega");
   });
 
   $("btnPaciente").addEventListener("click", function(){ abrirInstrumento(); });
 
+  var MIN_POR_INSTR = { end:1, int:2, phq9:3, csi:5, pcs:3, tsk11:3, whoqol:6 };
+  function textoTempo(){
+    var t = sequencia.reduce(function(a, x){ return a + (MIN_POR_INSTR[x.id] || 3); }, 0);
+    if(!t) { $("entregaTempo").style.display = "none"; return; }
+    var min = Math.max(5, Math.ceil(t/5)*5);
+    $("entregaTempo").innerHTML = "<b>Separe cerca de " + min + " minutos</b>, de preferência em um lugar tranquilo, para responder com calma e atenção." +
+      (visita && visita.link ? " Se precisar parar, as partes já concluídas ficam salvas e você continua depois pelo mesmo link." : "");
+    $("entregaTempo").style.display = "block";
+  }
   function atualizarTopo(){
     var total = sequencia.length;
     $("topoInfo").textContent = "· " + VISITAS[visita.tipo].nome;
@@ -513,6 +524,7 @@
     $("topoFixo").style.display = "flex";
     if(!sequencia.length){ return finalizar(); }
     atualizarTopo();
+    textoTempo();
     if(feitos.length){
       document.querySelector("#tela-entrega h1").textContent = "Vamos continuar";
       document.querySelector("#tela-entrega .sub").textContent =
