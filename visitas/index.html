@@ -419,8 +419,9 @@
 
     // fim do instrumento: calcula e grava
     var res = ins.escore(respostas.slice());
-    if(ins.id === "phq9"){ alertas = alertas.filter(function(a){ return a.indexOf("PHQ-9") !== 0; }); }
+    // item 9 positivo nunca some: se o paciente voltar e trocar para 0, o aviso fica
     if(ins.id === "phq9" && respostas[8] > 0){
+      alertas = alertas.filter(function(a){ return a.indexOf("PHQ-9") !== 0; });
       alertas.push("PHQ-9: item 9 positivo (valor " + respostas[8] + "). Conduta da equipe antes da saída do paciente.");
     }
     var args = {
